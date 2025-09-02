@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI提示词生成工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-center mb-6">AI提示词生成工具</h1>
+        
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="flex-1 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">选择平台</label>
+                    <select id="platform" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="公众号">公众号</option>
+                        <option value="头条号">头条号</option>
+                        <option value="知乎">知乎</option>
+                        <option value="微博">微博</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">选择领域</label>
+                    <select id="domain" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="汽车">汽车</option>
+                        <option value="财经">财经</option>
+                        <option value="软件开发">软件开发</option>
+                        <option value="科技数码">科技数码</option>
+                        <option value="健康">健康</option>
+                        <option value="情感">情感</option>
+                        <option value="副业">副业</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">信息内容</label>
+                    <textarea id="content" rows="6" class="w-full p-2 border border-gray-300 rounded-md"></textarea>
+                </div>
+                
+                <button id="generateBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">
+                    生成提示词
+                </button>
+                
+                <button id="copyBtn" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">
+                    复制提示词和内容
+                </button>
+            </div>
+            
+            <div class="flex-1">
+                <div class="sticky top-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">生成的提示词</label>
+                    <textarea id="prompt" rows="12" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" readonly></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
