@@ -4,60 +4,262 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI提示词生成工具</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-color: #409eff; /* 蓝色按钮 */
+            --success-color: #2cbb55; /* 绿色按钮 */
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #dcdfe6;
+            --radius: 8px;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 1000px;
+            padding: 40px;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 30px;
+        }
+
+        /* 左侧区域 */
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 右侧区域 */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 5px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #606266;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-color);
+            outline: none;
+            box-sizing: border-box; /* 确保padding不撑大宽度 */
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        select:focus, textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        /* 输入内容框的高度 */
+        #inputContent {
+            height: 150px;
+        }
+
+        /* 生成结果框的高度 - 填满右侧 */
+        #outputPrompt {
+            flex: 1;
+            background-color: #fcfcfc;
+            min-height: 380px;
+        }
+
+        .btn-group {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            font-weight: 500;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-generate {
+            background-color: var(--primary-color);
+        }
+
+        .btn-copy {
+            background-color: var(--success-color);
+        }
+
+        /* 响应式适配手机 */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .container {
+                width: 100%;
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-8">
-    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 class="text-2xl font-bold text-center mb-6">AI提示词生成工具</h1>
-        
-        <div class="flex flex-col md:flex-row gap-6">
-            <div class="flex-1 space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">选择平台</label>
-                    <select id="platform" class="w-full p-2 border border-gray-300 rounded-md">
-                        <option value="公众号">公众号</option>
-                        <option value="头条号">头条号</option>
-                        <option value="知乎">知乎</option>
-                        <option value="微博">微博</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">选择领域</label>
-                    <select id="domain" class="w-full p-2 border border-gray-300 rounded-md">
-                        <option value="汽车">汽车</option>
-                        <option value="财经">财经</option>
-                        <option value="软件开发">软件开发</option>
-                        <option value="科技数码">科技数码</option>
-                        <option value="健康">健康</option>
-                        <option value="情感">情感</option>
-                        <option value="副业">副业</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">信息内容</label>
-                    <textarea id="content" rows="6" class="w-full p-2 border border-gray-300 rounded-md"></textarea>
-                </div>
-                
-                <button id="generateBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">
-                    生成提示词
-                </button>
-                
-                <button id="copyBtn" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">
-                    复制提示词和内容
-                </button>
+<body>
+
+<div class="container">
+    <h1>AI提示词生成工具</h1>
+    
+    <div class="main-content">
+        <div class="left-panel">
+            <div class="form-group">
+                <label>选择平台</label>
+                <select id="platformSelect">
+                    <option value="公众号">公众号</option>
+                    <option value="头条号">头条号</option>
+                </select>
             </div>
-            
-            <div class="flex-1">
-                <div class="sticky top-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">生成的提示词</label>
-                    <textarea id="prompt" rows="12" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" readonly></textarea>
-                </div>
+
+            <div class="form-group">
+                <label>选择领域</label>
+                <select id="domainSelect">
+                    <option value="汽车">汽车</option>
+                    <option value="软件开发">软件开发</option>
+                    <option value="科技数码">科技数码</option>
+                    <option value="财经">财经</option>
+                    <option value="健康">健康</option>
+                    <option value="情感">情感</option>
+                    <option value="副业">副业</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>信息内容</label>
+                <textarea id="inputContent" placeholder="在此输入文章的核心素材、数据或主要观点..."></textarea>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-generate" onclick="generatePrompt()">生成提示词</button>
+                <button class="btn-copy" onclick="copyResult()">复制提示词和内容</button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="form-group" style="height: 100%;">
+                <label>生成的提示词</label>
+                <textarea id="outputPrompt" readonly placeholder="点击“生成提示词”按钮后，结果将显示在这里..."></textarea>
             </div>
         </div>
     </div>
-    
-    <script src="script.js"></script>
+</div>
+
+<script>
+    function generatePrompt() {
+        const platform = document.getElementById('platformSelect').value;
+        const domain = document.getElementById('domainSelect').value;
+        const content = document.getElementById('inputContent').value.trim();
+        
+        // 如果用户没有输入内容，给一个默认提示
+        const contentText = content ? content : "（此处粘贴具体的文章素材内容）";
+
+        // 根据平台调整微调风格要求
+        let styleRequirement = "";
+        let structureRequirement = "";
+
+        if (platform === "公众号") {
+            styleRequirement = `2. 风格定位：像老朋友聊天一样亲切自然，多用短句、反问句和网络热梗，注重情绪价值，避免生硬的说明书式语言。\n3. 排版优化：适当加入Emoji表情，重点内容进行加粗，段落要短，方便手机阅读。`;
+            structureRequirement = `4. 结尾：给出具体的建议或情感升华，并设置2个互动问题引导粉丝在评论区留言。`;
+        } else {
+            // 头条号风格：更注重资讯密度、观点犀利、推荐机制
+            styleRequirement = `2. 风格定位：观点犀利，逻辑严密，信息密度高。标题要足够吸睛（符合算法推荐机制），正文多用数据说话。\n3. 排版优化：清晰的小标题结构，图文并茂感强（用文字描述图片位置），适合快速资讯浏览。`;
+            structureRequirement = `4. 结尾：总结核心观点，引导读者关注和转发，引发争议或讨论。`;
+        }
+
+        // 构建提示词模版
+        const prompt = `你是一名专业的【${domain}领域博主】，请结合【输入信息】写一篇【${platform}】文章。
+
+【写作要求】：
+1. 字数控制：1500-1800字，内容详实但不注水。
+${styleRequirement}
+
+【文章结构】：
+1. 标题：请先提供5个吸引人的标题（15-25字，含关键词，符合${platform}调性）供选择。
+2. 引入：用热点事件或用户痛点（结合${domain}领域常见的痛点）开篇。
+3. 正文（总-分-总）：先抛出核心观点，再细分技术/案例/深度解读，最后总结。
+${structureRequirement}
+
+【输入信息如下】：
+${contentText}`;
+
+        // 输出到右侧文本框
+        document.getElementById('outputPrompt').value = prompt;
+    }
+
+    function copyResult() {
+        const promptText = document.getElementById('outputPrompt').value;
+        
+        if (!promptText) {
+            alert("请先生成提示词！");
+            return;
+        }
+
+        // 使用 Clipboard API 复制
+        navigator.clipboard.writeText(promptText).then(() => {
+            alert("✅ 提示词已成功复制到剪贴板！");
+        }).catch(err => {
+            console.error('复制失败: ', err);
+            alert("复制失败，请手动复制。");
+        });
+    }
+</script>
+
 </body>
 </html>
