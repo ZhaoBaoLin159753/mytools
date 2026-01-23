@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>婚前默契度大考验</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-decor">
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+    </div>
+    <div class="app-container">
+        <!-- Stage 1: Welcome Screen -->
+        <div id="welcome-screen" class="screen active">
+            <div class="content-wrapper">
+                <h1>💍 婚前默契度测试</h1>
+                <p class="subtitle">20个直击灵魂的问题<br>测试你们是否做好了步入婚姻的准备</p>
+                <div class="instruction-card">
+                    <h3>📝 规则说明</h3>
+                    <p>1. 系统将随机抽取10道题目</p>
+                    <p>2. 双方轮流作答，互不干扰</p>
+                    <p>3. 答案一致即为默契+1</p>
+                </div>
+                <button id="start-btn" class="primary-btn">开始测试</button>
+            </div>
+        </div>
+
+        <!-- Stage 2: Role Selection -->
+        <div id="role-selection" class="screen">
+            <h2>请选择你的身份</h2>
+            <div class="role-cards">
+                <div class="role-card" data-role="male">
+                    <span class="icon">🤵</span>
+                    <span>我是男方</span>
+                </div>
+                <div class="role-card" data-role="female">
+                    <span class="icon">👰</span>
+                    <span>我是女方</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 3: Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="header">
+                <div class="player-badge" id="current-player-badge">🤵 男方作答中</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-text"><span id="current-q-num">1</span> / <span id="total-q-num">10</span></div>
+            </div>
+            
+            <div class="question-card">
+                <h3 id="question-text">题目加载中...</h3>
+            </div>
+
+            <div class="options-container" id="options-container">
+                <!-- Options will be injected here -->
+            </div>
+        </div>
+
+        <!-- Stage 4: Interim Handover -->
+        <div id="interim-screen" class="screen">
+            <div class="content-wrapper">
+                <div class="icon-large">✅</div>
+                <h2>第一位作答完成</h2>
+                <p>请将手机交给对方<br>继续完成测试</p>
+                <button id="p2-start-btn" class="primary-btn">我是另一方，开始作答</button>
+            </div>
+        </div>
+
+        <!-- Stage 5: Results -->
+        <div id="result-screen" class="screen">
+            <div class="result-header">
+                <h2>默契度报告</h2>
+                <div class="score-circle">
+                    <span id="score-number">0</span>
+                    <span class="percent">%</span>
+                </div>
+                <h3 id="score-title">测试评语</h3>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('match')">默契点 (<span id="match-count">0</span>)</button>
+                <button class="tab-btn" onclick="switchTab('mismatch')">需磨合 (<span id="mismatch-count">0</span>)</button>
+            </div>
+
+            <div id="match-list" class="details-list active-list">
+                <!-- Match items -->
+            </div>
+            <div id="mismatch-list" class="details-list">
+                <!-- Mismatch items -->
+            </div>
+
+            <button id="restart-btn" class="secondary-btn">重新测试</button>
+        </div>
+    </div>
+
+    <script src="questions.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
