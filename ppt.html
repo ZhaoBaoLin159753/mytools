@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPT提示词生成工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            resize: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #409eff;
+            box-shadow: 0 0 5px rgba(64,158,255,0.2);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #409eff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #337ecc;
+        }
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        .result-box h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .result-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #444;
+            white-space: pre-wrap;
+        }
+        .copy-btn {
+            margin-top: 15px;
+            padding: 8px 15px;
+            background-color: #67c23a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            width: auto;
+            float: right;
+        }
+        .copy-btn:hover {
+            background-color: #52b22e;
+        }
+        .age-tips {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        /* 新增提示弹窗样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s, top 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+            top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PPT提示词生成工具</h1>
+        
+        <div class="form-group">
+            <label for="theme">PPT主题内容</label>
+            <input type="text" id="theme" placeholder="例如：南汤圆北饺子——舌尖上的冬至主题">
+        </div>
+        
+        <div class="form-group">
+            <label for="grade">应用年级</label>
+            <select id="grade">
+                <option value="">请选择年级</option>
+                <option value="小学一年级">小学一年级（6-7岁）</option>
+                <option value="小学二年级">小学二年级（7-8岁）</option>
+                <option value="小学三年级">小学三年级（8-9岁）</option>
+                <option value="小学四年级">小学四年级（9-10岁）</option>
+                <option value="小学五年级">小学五年级（10-11岁）</option>
+                <option value="小学六年级">小学六年级（11-12岁）</option>
+                <option value="初中一年级">初中一年级（12-13岁）</option>
+                <option value="初中二年级">初中二年级（13-14岁）</option>
+                <option value="初中三年级">初中三年级（14-15岁）</option>
+                <option value="高中一年级">高中一年级（15-16岁）</option>
+                <option value="高中二年级">高中二年级（16-17岁）</option>
+                <option value="高中三年级">高中三年级（17-18岁）</option>
+            </select>
+            <div class="age-tips">选择年级后会自动匹配对应年龄段认知特点</div>
+        </div>
+        
+        <button id="generateBtn">生成提示词</button>
+        
+        <div class="result-box" style="display: none;">
+            <h3>生成的PPT提示词</h3>
+            <div class="result-text" id="resultText"></div>
+            <button class="copy-btn" id="copyBtn">复制提示词</button>
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+
+    <!-- 新增提示弹窗 -->
+    <div class="toast" id="toast">已复制到剪贴板！</div>
+
+    <script>
+        // 年级对应年龄和特点配置
+        const gradeConfig = {
+            "小学一年级": { age: "6-7岁", feature: "内容要极简化、以图片和互动游戏为主，语言口语化、短句为主" },
+            "小学二年级": { age: "7-8岁", feature: "内容简单有趣，多使用卡通形象，增加简单的问答互动环节" },
+            "小学三年级": { age: "8-9岁", feature: "内容要简单易懂、生动有趣，语言要活泼，可设计互动环节" },
+            "小学四年级": { age: "9-10岁", feature: "内容可适当增加知识性，互动环节可设计小组讨论形式" },
+            "小学四年级": { age: "9-10岁", feature: "内容可适当增加知识性，互动环节可设计小组讨论形式" },
+            "小学五年级": { age: "10-11岁", feature: "内容兼顾趣味性和知识性，可加入简单的实践探究环节" },
+            "小学六年级": { age: "11-12岁", feature: "内容可适当深入，互动环节可设计主题辩论或分享环节" },
+            "初中一年级": { age: "12-13岁", feature: "内容注重逻辑性和知识性，语言规范，可设计案例分析环节" },
+            "初中二年级": { age: "13-14岁", feature: "内容强调知识体系构建，互动环节可设计合作探究任务" },
+            "初中三年级": { age: "14-15岁", feature: "内容贴合学业需求，注重实用性，互动环节可设计应用实践" },
+            "高中一年级": { age: "15-16岁", feature: "内容注重深度和广度，语言专业且易懂，可设计研究性学习环节" },
+            "高中二年级": { age: "16-17岁", feature: "内容强调学科融合，互动环节可设计项目式学习任务" },
+            "高中三年级": { age: "17-18岁", feature: "内容贴合升学需求，注重总结和应用，互动环节可设计模拟实践" }
+        };
+
+        // 显示提示弹窗函数
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 生成按钮点击事件
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const theme = document.getElementById('theme').value.trim();
+            const grade = document.getElementById('grade').value;
+            
+            // 验证输入
+            if (!theme) {
+                showToast('请输入PPT主题内容！');
+                return;
+            }
+            if (!grade) {
+                showToast('请选择应用年级！');
+                return;
+            }
+
+            // 获取年级对应的配置
+            const config = gradeConfig[grade];
+            const age = config.age;
+            const feature = config.feature;
+
+            // 生成提示词（优化版）
+            const prompt = `我为${grade}学生制作一个"${theme}"主题班会的PPT内容，大概2000字。
+需要注意：
+1.${grade}学生年龄约${age}，${feature}
+2.语言风格贴合该年龄段认知水平，通俗易懂
+3.设计符合该年龄段特点的互动环节
+4.内容要体现图文并茂的设计思路（标注出需要配图的位置）
+5.输出完整的2000字PPT内容框架，包含标题、分章节、互动环节设计、配图建议等`;
+
+            // 显示结果
+            document.getElementById('resultText').textContent = prompt;
+            document.querySelector('.result-box').style.display = 'block';
+        });
+
+        // 修复后的复制按钮点击事件
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const resultText = document.getElementById('resultText');
+            // 创建临时文本区域确保完整复制
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = resultText.textContent;
+            document.body.appendChild(tempTextArea);
+            // 选中并复制
+            tempTextArea.select();
+            tempTextArea.setSelectionRange(0, 99999); // 兼容移动设备
+            try {
+                document.execCommand('copy');
+                showToast('提示词已完整复制！');
+            } catch (err) {
+                showToast('复制失败，请手动复制！');
+                console.error('复制失败:', err);
+            }
+            // 移除临时文本区域
+            document.body.removeChild(tempTextArea);
+        });
+    </script>
+</body>
+</html>
