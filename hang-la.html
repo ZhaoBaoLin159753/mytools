@@ -1,0 +1,120 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.wrap { padding: 16px; font-family: var(--font-sans); }
+.tier-row { display: flex; align-items: stretch; margin-bottom: 4px; border: 0.5px solid var(--color-border-tertiary); border-radius: 6px; overflow: hidden; min-height: 72px; }
+.tier-label { width: 80px; min-width: 80px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 500; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.tier-label.s { background: #e53935; }
+.tier-label.a { background: #fb8c00; }
+.tier-label.b { background: #fdd835; color: #5a4000; text-shadow: none; }
+.tier-label.c { background: #b0bec5; color: #333; text-shadow: none; }
+.tier-label.d { background: #90a4ae; color: #333; text-shadow: none; }
+.tier-slots { flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; padding: 8px; background: var(--color-background-secondary); min-height: 72px; transition: background 0.15s; }
+.tier-slots.drag-over { background: var(--color-background-info); }
+.bottom-bar { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; padding: 10px; background: var(--color-background-secondary); border-radius: 8px; border: 0.5px solid var(--color-border-tertiary); min-height: 84px; }
+.bottom-bar.drag-over { background: var(--color-background-info); }
+.upload-btn { width: 64px; min-width: 64px; height: 64px; border: 1.5px dashed var(--color-border-secondary); border-radius: 8px; background: var(--color-background-primary); color: var(--color-text-secondary); font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.upload-btn:hover { background: var(--color-background-tertiary); }
+.pool-icons { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
+.icon-item { border-radius: 6px; overflow: visible; cursor: grab; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); display: flex; align-items: center; justify-content: center; position: relative; user-select: none; flex-shrink: 0; }
+.icon-item:active { cursor: grabbing; opacity: 0.7; }
+.icon-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; display: block; }
+.icon-item .del { display: none; position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: #e53935; border-radius: 50%; color: white; font-size: 11px; align-items: center; justify-content: center; cursor: pointer; font-weight: 500; line-height: 1; z-index: 2; }
+.icon-item.in-pool:hover .del { display: flex; }
+#fileInput { display: none; }
+</style>
+
+<div class="wrap">
+  <div class="tier-row">
+    <div class="tier-label s">夯</div>
+    <div class="tier-slots" data-tier="s" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"></div>
+  </div>
+  <div class="tier-row">
+    <div class="tier-label a">顶级</div>
+    <div class="tier-slots" data-tier="a" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"></div>
+  </div>
+  <div class="tier-row">
+    <div class="tier-label b">人上人</div>
+    <div class="tier-slots" data-tier="b" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"></div>
+  </div>
+  <div class="tier-row">
+    <div class="tier-label c">NPC</div>
+    <div class="tier-slots" data-tier="c" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"></div>
+  </div>
+  <div class="tier-row">
+    <div class="tier-label d">拉完了</div>
+    <div class="tier-slots" data-tier="d" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"></div>
+  </div>
+
+  <div class="bottom-bar" id="poolZone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+    <label class="upload-btn" for="fileInput" title="上传图标">+</label>
+    <input type="file" id="fileInput" accept="image/*" multiple onchange="handleUpload(event)" />
+    <div class="pool-icons" id="poolIcons"></div>
+  </div>
+</div>
+
+<script>
+let dragId = null;
+let idCounter = 0;
+const icons = {};
+
+function createIconEl(id, inPool) {
+  const size = inPool ? 64 : 56;
+  const el = document.createElement('div');
+  el.className = 'icon-item' + (inPool ? ' in-pool' : '');
+  el.id = 'icon-' + id;
+  el.draggable = true;
+  el.style.width = size + 'px';
+  el.style.height = size + 'px';
+  el.innerHTML = `<img src="${icons[id].src}" title="${icons[id].name}" /><span class="del" onclick="removeIcon(${id}, event)">x</span>`;
+  el.addEventListener('dragstart', e => { dragId = id; e.dataTransfer.effectAllowed = 'move'; });
+  el.addEventListener('dragend', () => { dragId = null; });
+  return el;
+}
+
+function removeIcon(id, e) {
+  e.stopPropagation();
+  const el = document.getElementById('icon-' + id);
+  if (el) el.remove();
+  delete icons[id];
+}
+
+function handleUpload(ev) {
+  Array.from(ev.target.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const id = ++idCounter;
+      icons[id] = { src: e.target.result, name: file.name };
+      document.getElementById('poolIcons').appendChild(createIconEl(id, true));
+    };
+    reader.readAsDataURL(file);
+  });
+  ev.target.value = '';
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (dragId === null) return;
+
+  const zone = e.currentTarget;
+  const old = document.getElementById('icon-' + dragId);
+  if (old) old.remove();
+
+  const inPool = zone.id === 'poolZone';
+  const newEl = createIconEl(dragId, inPool);
+
+  if (inPool) {
+    document.getElementById('poolIcons').appendChild(newEl);
+  } else {
+    zone.appendChild(newEl);
+  }
+}
+</script>
