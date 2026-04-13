@@ -1,29 +1,36 @@
-
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>排名展示</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-.wrap { padding: 16px; font-family: var(--font-sans); }
-.tier-row { display: flex; align-items: stretch; margin-bottom: 4px; border: 0.5px solid var(--color-border-tertiary); border-radius: 6px; overflow: hidden; min-height: 72px; }
+body { background: #f5f4f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.wrap { padding: 16px; max-width: 900px; margin: 0 auto; }
+.tier-row { display: flex; align-items: stretch; margin-bottom: 4px; border: 1px solid #d0cec4; border-radius: 6px; overflow: hidden; min-height: 72px; }
 .tier-label { width: 80px; min-width: 80px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 500; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
 .tier-label.s { background: #e53935; }
 .tier-label.a { background: #fb8c00; }
 .tier-label.b { background: #fdd835; color: #5a4000; text-shadow: none; }
 .tier-label.c { background: #b0bec5; color: #333; text-shadow: none; }
 .tier-label.d { background: #90a4ae; color: #333; text-shadow: none; }
-.tier-slots { flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; padding: 8px; background: var(--color-background-secondary); min-height: 72px; transition: background 0.15s; }
-.tier-slots.drag-over { background: var(--color-background-info); }
-.bottom-bar { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; padding: 10px; background: var(--color-background-secondary); border-radius: 8px; border: 0.5px solid var(--color-border-tertiary); min-height: 84px; }
-.bottom-bar.drag-over { background: var(--color-background-info); }
-.upload-btn { width: 64px; min-width: 64px; height: 64px; border: 1.5px dashed var(--color-border-secondary); border-radius: 8px; background: var(--color-background-primary); color: var(--color-text-secondary); font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.upload-btn:hover { background: var(--color-background-tertiary); }
+.tier-slots { flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; padding: 8px; background: #ececea; min-height: 72px; transition: background 0.15s; }
+.tier-slots.drag-over { background: #dbeeff; }
+.bottom-bar { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; padding: 10px; background: #ececea; border-radius: 8px; border: 1px solid #d0cec4; min-height: 84px; }
+.bottom-bar.drag-over { background: #dbeeff; }
+.upload-btn { width: 64px; min-width: 64px; height: 64px; border: 1.5px dashed #aaa; border-radius: 8px; background: #fff; color: #888; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.upload-btn:hover { background: #f0efed; }
 .pool-icons { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
-.icon-item { border-radius: 6px; overflow: visible; cursor: grab; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); display: flex; align-items: center; justify-content: center; position: relative; user-select: none; flex-shrink: 0; }
+.icon-item { border-radius: 6px; overflow: visible; cursor: grab; border: 1px solid #d0cec4; background: #fff; display: flex; align-items: center; justify-content: center; position: relative; user-select: none; flex-shrink: 0; }
 .icon-item:active { cursor: grabbing; opacity: 0.7; }
 .icon-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; display: block; }
 .icon-item .del { display: none; position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: #e53935; border-radius: 50%; color: white; font-size: 11px; align-items: center; justify-content: center; cursor: pointer; font-weight: 500; line-height: 1; z-index: 2; }
 .icon-item.in-pool:hover .del { display: flex; }
 #fileInput { display: none; }
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <div class="tier-row">
     <div class="tier-label s">夯</div>
@@ -103,14 +110,11 @@ function onDrop(e) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
   if (dragId === null) return;
-
   const zone = e.currentTarget;
   const old = document.getElementById('icon-' + dragId);
   if (old) old.remove();
-
   const inPool = zone.id === 'poolZone';
   const newEl = createIconEl(dragId, inPool);
-
   if (inPool) {
     document.getElementById('poolIcons').appendChild(newEl);
   } else {
@@ -118,3 +122,5 @@ function onDrop(e) {
   }
 }
 </script>
+</body>
+</html>
