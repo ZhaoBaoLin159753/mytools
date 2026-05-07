@@ -1,0 +1,529 @@
+	<!DOCTYPE html>
+	<html lang="zh-CN">
+	<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Weather — iOS Style</title>
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+	<style>
+	*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+	:root{
+	  --bg:#09090b;--fg:#f5f5f7;--muted:rgba(245,245,247,0.45);
+	  --accent:#FF9F0A;
+	  --card:rgba(255,255,255,0.045);--card-h:rgba(255,255,255,0.07);--card-a:rgba(255,255,255,0.1);
+	  --bdr:rgba(255,255,255,0.06);--bdr-h:rgba(255,255,255,0.12);--bdr-a:rgba(255,255,255,0.22);
+	  --r:26px;--ease:cubic-bezier(.4,0,.2,1)
+	}
+	body{
+	  font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+	  background:var(--bg);color:var(--fg);
+	  min-height:100vh;overflow:hidden;
+	  display:flex;align-items:center;justify-content:center
+	}
+	/* 背景光斑 */
+	.glow{position:fixed;border-radius:50%;filter:blur(130px);pointer-events:none;z-index:0;
+	  transition:background 1.4s var(--ease),opacity 1.4s var(--ease)}
+	.g1{width:650px;height:650px;top:-220px;left:-180px;background:var(--accent);opacity:.1}
+	.g2{width:500px;height:500px;bottom:-200px;right:-120px;background:var(--accent);opacity:.05}
+	.g3{width:350px;height:350px;top:45%;left:55%;transform:translate(-50%,-50%);background:var(--accent);opacity:.03}
+	/* 噪声纹理叠加 */
+	.noise{
+	  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.035;
+	  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	  background-size:128px 128px
+	}
+	.wrap{position:relative;z-index:1;width:100%;max-width:1480px;padding:36px 44px;height:100vh;display:flex;flex-direction:column}
+	/* 头部 */
+	.hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px}
+	.hd-l h1{font-size:30px;font-weight:700;letter-spacing:-.6px}
+	.hd-l .loc{font-size:13px;color:var(--muted);font-weight:400;margin-top:2px;display:flex;align-items:center;gap:6px}
+	.hd-l .loc::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);transition:background .6s var(--ease)}
+	.hd-r{display:flex;gap:6px}
+	.ub{
+	  width:34px;height:34px;border-radius:50%;border:1px solid var(--bdr);
+	  background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+	  color:var(--muted);font-family:inherit;font-size:12px;font-weight:600;
+	  cursor:pointer;transition:all .35s var(--ease);display:flex;align-items:center;justify-content:center
+	}
+	.ub:hover{border-color:var(--bdr-h);color:var(--fg)}
+	.ub.on{background:var(--accent);color:#000;border-color:var(--accent)}
+	/* 卡片网格 */
+	.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;flex:1;min-height:0}
+	/* 天气卡片 */
+	.card{
+	  position:relative;border-radius:var(--r);overflow:hidden;cursor:pointer;
+	  transition:all .5s var(--ease);border:1px solid var(--bdr);
+	  background:var(--card);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+	  display:flex;flex-direction:column;will-change:transform
+	}
+	.card:hover{transform:translateY(-5px) scale(1.015);border-color:var(--bdr-h);background:var(--card-h)}
+	.card.on{
+	  border-color:var(--bdr-a);background:var(--card-a);
+	  transform:translateY(-3px) scale(1.015);
+	  box-shadow:0 0 60px -15px var(--accent),0 20px 40px -20px rgba(0,0,0,.5)
+	}
+	.card.on::after{
+	  content:'';position:absolute;inset:-1px;border-radius:var(--r);padding:1px;
+	  background:linear-gradient(135deg,rgba(255,255,255,.18),transparent 40%,transparent 60%,rgba(255,255,255,.08));
+	  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+	  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none
+	}
+	/* Canvas区 */
+	.cv{flex:1;position:relative;min-height:0;overflow:hidden;border-radius:var(--r) var(--r) 0 0}
+	.cv canvas{position:absolute;inset:0;width:100%;height:100%}
+	/* 卡片信息 */
+	.ci{
+	  padding:18px 20px 20px;position:relative;z-index:2;
+	  background:linear-gradient(to top,rgba(0,0,0,.35) 0%,rgba(0,0,0,.1) 60%,transparent 100%)
+	}
+	.ci .wn{font-size:15px;font-weight:600;letter-spacing:.2px;margin-bottom:3px}
+	.ci .wt{font-size:42px;font-weight:200;letter-spacing:-2px;line-height:1}
+	.ci .wd{font-size:11px;color:var(--muted);margin-top:7px;font-weight:400;letter-spacing:.1px}
+	/* 底部控制 */
+	.ctrls{display:flex;gap:10px;margin-top:24px;justify-content:center;flex-wrap:wrap}
+	.cb{
+	  padding:9px 26px;border-radius:100px;border:1px solid var(--bdr);
+	  background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+	  color:var(--muted);font-family:inherit;font-size:13px;font-weight:500;
+	  cursor:pointer;transition:all .35s var(--ease);user-select:none
+	}
+	.cb:hover{border-color:var(--bdr-h);color:var(--fg);background:var(--card-h)}
+	.cb.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+	/* 时间标签 */
+	.time-badge{
+	  position:absolute;top:18px;left:20px;z-index:3;
+	  font-size:11px;font-weight:500;color:rgba(255,255,255,.5);
+	  background:rgba(0,0,0,.25);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+	  padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.06);
+	  letter-spacing:.3px
+	}
+	@media(max-width:1100px){
+	  .grid{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr)}
+	  .wrap{padding:24px}
+	}
+	@media(max-width:640px){
+	  .grid{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr);gap:10px}
+	  .wrap{padding:16px}
+	  .ci .wt{font-size:32px}
+	  .ci .wn{font-size:13px}
+	}
+	@media(prefers-reduced-motion:reduce){
+	  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+	}
+	</style>
+	</head>
+	<body>
+	<div class="glow g1" id="g1"></div>
+	<div class="glow g2" id="g2"></div>
+	<div class="glow g3" id="g3"></div>
+	<div class="noise"></div>
+	<main class="wrap">
+	  <header class="hd">
+	    <div class="hd-l">
+	      <h1>Weather</h1>
+	      <div class="loc">Beijing, China</div>
+	    </div>
+	    <div class="hd-r">
+	      <button class="ub on" onclick="setUnit('C')" aria-label="摄氏度">C</button>
+	      <button class="ub" onclick="setUnit('F')" aria-label="华氏度">F</button>
+	    </div>
+	  </header>
+	  <section class="grid" aria-label="天气卡片">
+	    <article class="card on" data-w="sunny" onclick="pick('sunny')">
+	      <div class="cv"><canvas id="cs"></canvas><span class="time-badge" id="ts"></span></div>
+	      <div class="ci"><div class="wn">晴天</div><div class="wt">28°</div><div class="wd">万里无云，阳光明媚</div></div>
+	    </article>
+	    <article class="card" data-w="windy" onclick="pick('windy')">
+	      <div class="cv"><canvas id="cw"></canvas><span class="time-badge" id="tw"></span></div>
+	      <div class="ci"><div class="wn">大风</div><div class="wt">15°</div><div class="wd">阵风7级，注意防风</div></div>
+	    </article>
+	    <article class="card" data-w="rainy" onclick="pick('rainy')">
+	      <div class="cv"><canvas id="cr"></canvas><span class="time-badge" id="tr"></span></div>
+	      <div class="ci"><div class="wn">暴雨</div><div class="wt">12°</div><div class="wd">雷电交加，减少外出</div></div>
+	    </article>
+	    <article class="card" data-w="snowy" onclick="pick('snowy')">
+	      <div class="cv"><canvas id="cn"></canvas><span class="time-badge" id="tn"></span></div>
+	      <div class="ci"><div class="wn">暴雪</div><div class="wt">-5°</div><div class="wd">大雪纷飞，注意保暖</div></div>
+	    </article>
+	  </section>
+	  <nav class="ctrls" aria-label="天气切换">
+	    <button class="cb on" data-w="sunny" onclick="pick('sunny')">晴天</button>
+	    <button class="cb" data-w="windy" onclick="pick('windy')">大风</button>
+	    <button class="cb" data-w="rainy" onclick="pick('rainy')">暴雨</button>
+	    <button class="cb" data-w="snowy" onclick="pick('snowy')">暴雪</button>
+	  </nav>
+	</main>
+	<script>
+	/* ====== 全局状态 ====== */
+	let cur = 'sunny', useC = true, T = 0;
+	const eps = 0.001;
+	/* 主题配色 */
+	const TH = {
+	  sunny:{accent:'#FF9F0A'},
+	  windy:{accent:'#2DD4A8'},
+	  rainy:{accent:'#64B5F6'},
+	  snowy:{accent:'#B0BEC5'}
+	};
+	const TEMPS = {sunny:28,windy:15,rainy:12,snowy:-5};
+	/* Canvas引用 */
+	const C = {};
+	/* ====== 粒子数据 ====== */
+	let WCL=[], WLN=[];       // 大风：云、风线
+	let RDR=[], RRP=[], RFL=0, RBL=[]; // 暴雨：雨滴、涟漪、闪光、闪电段
+	let SFK=[], SPH=[], SML=0;         // 暴雪：雪花、堆积高度
+	function initParticles(){
+	  /* 大风 */
+	  WCL=[];for(let i=0;i<6;i++) WCL.push({x:Math.random()*1.4-.2,y:.06+Math.random()*.22,
+	    sp:.0003+Math.random()*.0007,sc:.35+Math.random()*.65,op:.12+Math.random()*.2});
+	  WLN=[];for(let i=0;i<18;i++) WLN.push({x:Math.random(),y:.12+Math.random()*.55,
+	    ln:.03+Math.random()*.1,sp:.0015+Math.random()*.004,op:.05+Math.random()*.1});
+	  /* 暴雨 */
+	  RDR=[];for(let i=0;i<140;i++) RDR.push({x:Math.random()*1.35-.15,y:Math.random(),
+	    sp:.006+Math.random()*.012,ln:.015+Math.random()*.035,op:.1+Math.random()*.3});
+	  RRP=[];RFL=0;RBL=[];
+	  /* 暴雪 */
+	  SFK=[];for(let i=0;i<90;i++) SFK.push({x:Math.random(),y:Math.random(),
+	    sz:.4+Math.random()*2.5,sp:.0006+Math.random()*.0018,dr:.25+Math.random()*.7,
+	    ph:Math.random()*Math.PI*2,op:.25+Math.random()*.65,rot:Math.random()*6.28,rs:(Math.random()-.5)*.008});
+	  SPH=new Array(50).fill(0);SML=0;
+	}
+	/* ====== Canvas初始化 ====== */
+	function setupCanvas(){
+	  const ids={sunny:'cs',windy:'cw',rainy:'cr',snowy:'cn'};
+	  const dpr=window.devicePixelRatio||1;
+	  Object.entries(ids).forEach(([k,id])=>{
+	    const cv=document.getElementById(id);
+	    const r=cv.parentElement.getBoundingClientRect();
+	    cv.width=r.width*dpr;cv.height=r.height*dpr;
+	    const ctx=cv.getContext('2d');
+	    ctx.setTransform(dpr,0,0,dpr,0,0);
+	    C[k]={cv,ctx,w:r.width,h:r.height};
+	  });
+	}
+	/* ====== 绘制：晴天 ====== */
+	function drawSunny(ctx,w,h,t){
+	  /* 背景径向渐变 */
+	  const bg=ctx.createRadialGradient(w*.5,h*.3,0,w*.5,h*.3,Math.max(eps,w*.95));
+	  bg.addColorStop(0,'#3d1e00');bg.addColorStop(.45,'#1a0900');bg.addColorStop(1,'#080300');
+	  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+	  const cx=w*.5,cy=h*.3,sr=Math.max(eps,w*.085);
+	  /* 多层光晕脉冲 */
+	  for(let i=0;i<4;i++){
+	    const pr=Math.max(eps,sr*(2.8+i*1.1)+Math.sin(t*(.35+i*.12))*(sr*.35));
+	    const gl=ctx.createRadialGradient(cx,cy,0,cx,cy,pr);
+	    const a=.07-i*.015;
+	    gl.addColorStop(0,`rgba(255,200,80,${Math.max(0,a)})`);
+	    gl.addColorStop(.6,`rgba(255,150,30,${Math.max(0,a*.4)})`);
+	    gl.addColorStop(1,'rgba(255,100,0,0)');
+	    ctx.beginPath();ctx.arc(cx,cy,pr,0,Math.PI*2);ctx.fillStyle=gl;ctx.fill();
+	  }
+	  /* 旋转光线 */
+	  ctx.save();ctx.translate(cx,cy);ctx.rotate(t*.12);
+	  for(let i=0;i<14;i++){
+	    const a=(i/14)*Math.PI*2;
+	    const rl=sr*4+Math.sin(t*.7+i*.45)*sr*.6;
+	    const sp=.05;
+	    ctx.beginPath();
+	    ctx.moveTo(Math.cos(a)*sr*1.15,Math.sin(a)*sr*1.15);
+	    ctx.lineTo(Math.cos(a-sp)*rl,Math.sin(a-sp)*rl);
+	    ctx.lineTo(Math.cos(a+sp)*rl,Math.sin(a+sp)*rl);
+	    ctx.closePath();
+	    const rg=ctx.createRadialGradient(0,0,sr,0,0,Math.max(eps,rl));
+	    const ra=.1+Math.sin(t+i)*.03;
+	    rg.addColorStop(0,`rgba(255,200,80,${Math.max(0,ra)})`);rg.addColorStop(1,'rgba(255,150,30,0)');
+	    ctx.fillStyle=rg;ctx.fill();
+	  }
+	  ctx.restore();
+	  /* 太阳本体 */
+	  const sg=ctx.createRadialGradient(cx-sr*.2,cy-sr*.2,0,cx,cy,sr);
+	  sg.addColorStop(0,'#FFF8E1');sg.addColorStop(.3,'#FFE082');
+	  sg.addColorStop(.7,'#FFB300');sg.addColorStop(1,'#FF8F00');
+	  ctx.beginPath();ctx.arc(cx,cy,sr,0,Math.PI*2);ctx.fillStyle=sg;ctx.fill();
+	  /* 高光 */
+	  const hr=Math.max(eps,sr*.35);
+	  const hg=ctx.createRadialGradient(cx-sr*.22,cy-sr*.22,0,cx-sr*.22,cy-sr*.22,hr);
+	  hg.addColorStop(0,'rgba(255,255,255,0.55)');hg.addColorStop(1,'rgba(255,255,255,0)');
+	  ctx.beginPath();ctx.arc(cx-sr*.22,cy-sr*.22,hr,0,Math.PI*2);ctx.fillStyle=hg;ctx.fill();
+	  /* 热浪扭曲 — 底部波浪线 */
+	  ctx.save();ctx.globalAlpha=.06;
+	  for(let i=0;i<3;i++){
+	    ctx.beginPath();
+	    for(let x=0;x<w;x+=4){
+	      const y2=h*.75+i*h*.06+Math.sin(x*.02+t*1.5+i)*4+Math.sin(x*.05+t*2)*2;
+	      x===0?ctx.moveTo(x,y2):ctx.lineTo(x,y2);
+	    }
+	    ctx.strokeStyle='#FFB300';ctx.lineWidth=1.5;ctx.stroke();
+	  }
+	  ctx.restore();
+	}
+	/* ====== 绘制：大风 ====== */
+	function drawWindy(ctx,w,h,t){
+	  const bg=ctx.createLinearGradient(0,0,0,h);
+	  bg.addColorStop(0,'#001a14');bg.addColorStop(.6,'#00120e');bg.addColorStop(1,'#000a07');
+	  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+	  /* 远景雾 */
+	  const fg=ctx.createRadialGradient(w*.35,h*.4,0,w*.35,h*.4,Math.max(eps,w*.55));
+	  fg.addColorStop(0,'rgba(45,212,168,0.035)');fg.addColorStop(1,'rgba(45,212,168,0)');
+	  ctx.fillStyle=fg;ctx.fillRect(0,0,w,h);
+	  /* 风线 */
+	  WLN.forEach(l=>{
+	    l.x+=l.sp;if(l.x>1.15){l.x=-l.ln;l.y=.12+Math.random()*.55;l.op=.05+Math.random()*.1}
+	    const lx=l.x*w,ly=l.y*h,ll=l.ln*w;
+	    ctx.beginPath();ctx.moveTo(lx,ly);
+	    ctx.quadraticCurveTo(lx+ll*.5,ly-4-Math.sin(t*2+lx*.01)*3,lx+ll,ly+2);
+	    ctx.strokeStyle=`rgba(45,212,168,${l.op})`;ctx.lineWidth=1;ctx.stroke();
+	  });
+	  /* 云朵 */
+	  WCL.forEach(c=>{
+	    c.x+=c.sp;if(c.x>1.35){c.x=-.35;c.y=.06+Math.random()*.22}
+	    ctx.save();ctx.translate(c.x*w,c.y*h);ctx.scale(c.sc,c.sc);ctx.globalAlpha=c.op;
+	    ctx.fillStyle='#2DD4A8';ctx.beginPath();
+	    ctx.arc(0,0,20,0,Math.PI*2);ctx.arc(20,-4,16,0,Math.PI*2);
+	    ctx.arc(-16,4,14,0,Math.PI*2);ctx.arc(8,7,12,0,Math.PI*2);ctx.arc(-6,-7,11,0,Math.PI*2);
+	    ctx.fill();ctx.restore();
+	  });
+	  /* 树木摇曳 */
+	  const tree=(bx,th,ph)=>{
+	    const sw=Math.sin(t*1.6+ph)*20+Math.sin(t*3.1+ph)*6;
+	    const tx=bx+sw,ty=h-th;
+	    /* 树干 */
+	    ctx.beginPath();ctx.moveTo(bx-3,h);
+	    ctx.quadraticCurveTo(bx+sw*.4,h-th*.5,tx,ty);
+	    ctx.strokeStyle='rgba(70,55,35,0.65)';ctx.lineWidth=5;ctx.stroke();
+	    /* 树冠 */
+	    const cr=Math.max(eps,17+Math.sin(t*2+ph)*2.5);
+	    ctx.globalAlpha=.45;ctx.fillStyle='#1a8a70';
+	    ctx.beginPath();ctx.arc(tx,ty,cr,0,Math.PI*2);ctx.fill();
+	    ctx.beginPath();ctx.arc(tx-10,ty+5,Math.max(eps,cr*.65),0,Math.PI*2);ctx.fill();
+	    ctx.beginPath();ctx.arc(tx+11,ty+3,Math.max(eps,cr*.6),0,Math.PI*2);ctx.fill();
+	    ctx.globalAlpha=1;
+	  };
+	  tree(w*.2,h*.26,0);tree(w*.7,h*.33,1.6);tree(w*.45,h*.2,3.2);
+	  /* 落叶 */
+	  ctx.save();ctx.globalAlpha=.35;
+	  for(let i=0;i<6;i++){
+	    const lx=((t*40+i*137)%w);
+	    const ly=h*.2+Math.sin(t*1.2+i*2)*h*.25+i*h*.08;
+	    const lr=t*2+i;
+	    ctx.save();ctx.translate(lx,ly);ctx.rotate(lr);
+	    ctx.fillStyle=i%2?'#2DD4A8':'#1a8a70';
+	    ctx.beginPath();ctx.ellipse(0,0,4,2,0,0,Math.PI*2);ctx.fill();
+	    ctx.restore();
+	  }
+	  ctx.restore();
+	  /* 地面 */
+	  const gd=ctx.createLinearGradient(0,h*.9,0,h);
+	  gd.addColorStop(0,'rgba(18,38,30,0)');gd.addColorStop(1,'rgba(18,38,30,0.35)');
+	  ctx.fillStyle=gd;ctx.fillRect(0,h*.9,w,h*.1);
+	}
+	/* ====== 绘制：暴雨 ====== */
+	function drawRainy(ctx,w,h,t){
+	  const bg=ctx.createLinearGradient(0,0,0,h);
+	  bg.addColorStop(0,'#020810');bg.addColorStop(.5,'#010508');bg.addColorStop(1,'#010305');
+	  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+	  /* 闪电触发 */
+	  if(Math.random()<.005){
+	    RFL=1;
+	    RBL=[];
+	    const lx=w*(.15+Math.random()*.7);
+	    mkBolt(lx,0,lx+(Math.random()-.5)*50,h*.6,4,RBL);
+	  }
+	  /* 闪光覆盖 */
+	  if(RFL>.01){
+	    ctx.fillStyle=`rgba(150,180,255,${RFL*.15})`;ctx.fillRect(0,0,w,h);
+	    RFL*=.86;
+	  }
+	  /* 闪电线条 */
+	  if(RFL>.01) RBL.forEach(b=>{
+	    ctx.beginPath();ctx.moveTo(b.s[0].x,b.s[0].y);
+	    for(let i=1;i<b.s.length;i++) ctx.lineTo(b.s[i].x,b.s[i].y);
+	    ctx.strokeStyle=`rgba(200,220,255,${b.op*RFL})`;ctx.lineWidth=Math.max(.5,b.w);ctx.stroke();
+	  });
+	  /* 雨滴 */
+	  RDR.forEach(d=>{
+	    d.y+=d.sp;d.x-=d.sp*.13;
+	    if(d.y>1){
+	      if(RRP.length<30) RRP.push({x:d.x+d.sp*.13,y:.87+Math.random()*.08,
+	        r:1,mr:3+Math.random()*9,op:.35+Math.random()*.2});
+	      d.y=-d.ln;d.x=Math.random()*1.35-.15;
+	    }
+	    const dx=d.x*w,dy=d.y*h,dl=d.ln*h;
+	    ctx.beginPath();ctx.moveTo(dx,dy);ctx.lineTo(dx+dl*.13,dy+dl);
+	    ctx.strokeStyle=`rgba(130,160,200,${d.op})`;ctx.lineWidth=.8;ctx.stroke();
+	  });
+	  /* 涟漪 */
+	  RRP=RRP.filter(r=>r.op>.01);
+	  RRP.forEach(r=>{
+	    r.r+=.45;r.op*=.92;
+	    ctx.beginPath();
+	    ctx.ellipse(r.x*w,r.y*h,Math.max(eps,r.r),Math.max(eps,r.r*.28),0,0,Math.PI*2);
+	    ctx.strokeStyle=`rgba(130,160,200,${r.op})`;ctx.lineWidth=.7;ctx.stroke();
+	  });
+	  /* 水洼 */
+	  const pd=ctx.createLinearGradient(0,h*.84,0,h);
+	  pd.addColorStop(0,'rgba(18,30,55,0)');pd.addColorStop(.35,'rgba(18,30,55,0.22)');
+	  pd.addColorStop(1,'rgba(25,42,70,0.45)');
+	  ctx.fillStyle=pd;ctx.fillRect(0,h*.84,w,h*.16);
+	  /* 水洼反光 */
+	  ctx.save();ctx.globalAlpha=.04;
+	  for(let i=0;i<5;i++){
+	    const rx=w*(.1+i*.2)+Math.sin(t+i)*8;
+	    const ry=h*.92+Math.cos(t*.7+i)*3;
+	    const rw=Math.max(eps,15+Math.sin(t*1.3+i)*5);
+	    ctx.beginPath();ctx.ellipse(rx,ry,rw,Math.max(eps,rw*.2),0,0,Math.PI*2);
+	    ctx.fillStyle='#64B5F6';ctx.fill();
+	  }
+	  ctx.restore();
+	}
+	function mkBolt(x1,y1,x2,y2,d,arr){
+	  if(d<=0)return;
+	  const segs=[{x:x1,y:y1}];const cnt=4+Math.floor(Math.random()*4);
+	  let cx=x1,cy=y1;const dx=(x2-x1)/cnt,dy=(y2-y1)/cnt;
+	  for(let i=0;i<cnt;i++){
+	    cx+=dx+(Math.random()-.5)*28;cy+=dy;segs.push({x:cx,y:cy});
+	    if(d>1&&Math.random()<.3) mkBolt(cx,cy,cx+(Math.random()-.5)*55,cy+dy*2,d-1,arr);
+	  }
+	  arr.push({s:segs,op:.3+d*.15,w:d*.7});
+	}
+	/* ====== 绘制：暴雪 ====== */
+	function drawSnowy(ctx,w,h,t){
+	  const bg=ctx.createLinearGradient(0,0,0,h);
+	  bg.addColorStop(0,'#0b0d11');bg.addColorStop(.6,'#090b0e');bg.addColorStop(1,'#070809');
+	  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+	  /* 冷雾 */
+	  const mg=ctx.createRadialGradient(w*.5,h*.25,0,w*.5,h*.25,Math.max(eps,w*.6));
+	  mg.addColorStop(0,'rgba(190,200,215,0.025)');mg.addColorStop(1,'rgba(190,200,215,0)');
+	  ctx.fillStyle=mg;ctx.fillRect(0,0,w,h);
+	  /* 堆积缓慢融化 */
+	  SML+=.008;if(SML>1){SML=0;SPH=SPH.map(v=>Math.max(0,v-.03))}
+	  /* 雪花 */
+	  SFK.forEach(f=>{
+	    f.y+=f.sp;f.x+=Math.sin(t*f.dr+f.ph)*.001;f.rot+=f.rs;
+	    const col=Math.floor(f.x*SPH.length);
+	    const pile=(col>=0&&col<SPH.length)?SPH[col]/h:0;
+	    if(f.y>1-pile){
+	      if(col>=0&&col<SPH.length){
+	        SPH[col]=Math.min(SPH[col]+.12,h*.18);
+	        if(col>0)SPH[col-1]=Math.max(SPH[col-1],SPH[col]*.65);
+	        if(col<SPH.length-1)SPH[col+1]=Math.max(SPH[col+1],SPH[col]*.65);
+	      }
+	      f.y=-f.sz/h;f.x=Math.random();
+	    }
+	    if(f.x<0)f.x=1;if(f.x>1)f.x=0;
+	    const fx=f.x*w,fy=f.y*h,fs=Math.max(eps,f.sz);
+	    ctx.save();ctx.translate(fx,fy);ctx.rotate(f.rot);ctx.globalAlpha=f.op;
+	    if(fs>1.4){
+	      /* 六角雪花 */
+	      ctx.strokeStyle='#d5dae5';ctx.lineWidth=.5;
+	      for(let i=0;i<6;i++){
+	        const a=(i/6)*Math.PI*2;
+	        const ex=Math.cos(a)*fs*2.5,ey=Math.sin(a)*fs*2.5;
+	        ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(ex,ey);ctx.stroke();
+	        const mx=ex*.6,my=ey*.6;
+	        ctx.beginPath();ctx.moveTo(mx,my);
+	        ctx.lineTo(mx+Math.cos(a+.5)*fs*.8,my+Math.sin(a+.5)*fs*.8);ctx.stroke();
+	        ctx.beginPath();ctx.moveTo(mx,my);
+	        ctx.lineTo(mx+Math.cos(a-.5)*fs*.8,my+Math.sin(a-.5)*fs*.8);ctx.stroke();
+	      }
+	    }else{
+	      ctx.beginPath();ctx.arc(0,0,fs,0,Math.PI*2);ctx.fillStyle='#d5dae5';ctx.fill();
+	    }
+	    ctx.restore();
+	  });
+	  /* 堆积雪地 — 平滑曲线 */
+	  ctx.beginPath();ctx.moveTo(0,h);
+	  const pl=SPH.length;
+	  for(let i=0;i<pl;i++){
+	    const px=(i/pl)*w,py=h-SPH[i];
+	    if(i===0){ctx.lineTo(px,py)}
+	    else{
+	      const ppx=((i-1)/pl)*w,ppy=h-SPH[i-1];
+	      ctx.quadraticCurveTo(ppx,ppy,(ppx+px)/2,(ppy+py)/2);
+	    }
+	  }
+	  ctx.lineTo(w,h-SPH[pl-1]);ctx.lineTo(w,h);ctx.closePath();
+	  const sg=ctx.createLinearGradient(0,h-h*.2,0,h);
+	  sg.addColorStop(0,'rgba(205,210,222,0.7)');sg.addColorStop(.5,'rgba(190,195,208,0.5)');
+	  sg.addColorStop(1,'rgba(175,180,195,0.35)');
+	  ctx.fillStyle=sg;ctx.fill();
+	  /* 堆积高光 */
+	  ctx.save();ctx.globalAlpha=.08;
+	  for(let i=0;i<pl;i+=3){
+	    const px=(i/pl)*w,py=h-SPH[i];
+	    if(SPH[i]>2){
+	      ctx.beginPath();ctx.arc(px,py+1,Math.max(eps,SPH[i]*.15),0,Math.PI*2);
+	      ctx.fillStyle='#fff';ctx.fill();
+	    }
+	  }
+	  ctx.restore();
+	}
+	/* ====== 动画主循环 ====== */
+	function loop(){
+	  T+=.016;
+	  ['sunny','windy','rainy','snowy'].forEach(k=>{
+	    const{ctx,w,h}=C[k];if(!w||!h)return;
+	    ctx.clearRect(0,0,w,h);
+	    if(k==='sunny')drawSunny(ctx,w,h,T);
+	    else if(k==='windy')drawWindy(ctx,w,h,T);
+	    else if(k==='rainy')drawRainy(ctx,w,h,T);
+	    else drawSnowy(ctx,w,h,T);
+	  });
+	  /* 时间标签 */
+	  const now=new Date();
+	  const ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+	  document.querySelectorAll('.time-badge').forEach(e=>e.textContent=ts);
+	  requestAnimationFrame(loop);
+	}
+	/* ====== 交互 ====== */
+	function pick(w){
+	  if(cur===w)return;cur=w;
+	  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('on',c.dataset.w===w));
+	  document.querySelectorAll('.cb').forEach(b=>b.classList.toggle('on',b.dataset.w===w));
+	  const a=TH[w].accent;
+	  document.documentElement.style.setProperty('--accent',a);
+	  ['g1','g2','g3'].forEach(id=>document.getElementById(id).style.background=a);
+	  updTemps();
+	}
+	function setUnit(u){
+	  useC=(u==='C');
+	  document.querySelectorAll('.ub').forEach(b=>b.classList.toggle('on',b.textContent===u));
+	  updTemps();
+	}
+	function updTemps(){
+	  document.querySelectorAll('.card').forEach(c=>{
+	    const w2=c.dataset.w;let v=TEMPS[w2];
+	    if(!useC)v=Math.round(v*9/5+32);
+	    c.querySelector('.wt').textContent=v+'°';
+	  });
+	}
+	/* ====== 卡片鼠标3D倾斜 ====== */
+	document.querySelectorAll('.card').forEach(card=>{
+	  card.addEventListener('mousemove',e=>{
+	    const r=card.getBoundingClientRect();
+	    const x=(e.clientX-r.left)/r.width-.5;
+	    const y=(e.clientY-r.top)/r.height-.5;
+	    const isOn=card.classList.contains('on');
+	    const base=isOn?'translateY(-3px) scale(1.015)':'translateY(-5px) scale(1.015)';
+	    card.style.transform=`${base} perspective(800px) rotateY(${x*5}deg) rotateX(${-y*5}deg)`;
+	  });
+	  card.addEventListener('mouseleave',()=>{
+	    card.style.transform='';
+	  });
+	});
+	/* ====== 键盘可访问 ====== */
+	document.addEventListener('keydown',e=>{
+	  const ws=['sunny','windy','rainy','snowy'];
+	  const idx=ws.indexOf(cur);
+	  if(e.key==='ArrowRight'||e.key==='ArrowDown'){pick(ws[(idx+1)%4]);e.preventDefault()}
+	  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){pick(ws[(idx+3)%4]);e.preventDefault()}
+	});
+	/* ====== 启动 ====== */
+	window.addEventListener('load',()=>{
+	  setupCanvas();initParticles();loop();
+	});
+	window.addEventListener('resize',()=>{
+	  setupCanvas();initParticles();
+	});
+	</script>
+	</body>
+	</html>

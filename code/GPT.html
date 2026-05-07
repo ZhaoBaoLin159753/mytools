@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>iOS18 Weather Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+:root{
+    --glass: rgba(255,255,255,0.08);
+    --glass-border: rgba(255,255,255,0.12);
+    --text: rgba(255,255,255,0.92);
+    --sub: rgba(255,255,255,0.58);
+}
+
+body{
+    font-family: "Inter", sans-serif;
+    background:
+        radial-gradient(circle at top left,#1e2f50 0%,transparent 25%),
+        radial-gradient(circle at top right,#301d4f 0%,transparent 30%),
+        linear-gradient(145deg,#090b10,#111827 45%,#0a0d14);
+    min-height:100vh;
+    overflow:hidden;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+}
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    backdrop-filter: blur(120px);
+    z-index:-1;
+}
+
+.title{
+    font-size:42px;
+    font-weight:700;
+    margin-bottom:24px;
+    letter-spacing:-1px;
+    background:linear-gradient(90deg,#fff,#9ec9ff,#ffffff);
+    -webkit-background-clip:text;
+    color:transparent;
+}
+
+.controls{
+    display:flex;
+    gap:12px;
+    margin-bottom:34px;
+    flex-wrap:wrap;
+    justify-content:center;
+}
+
+.controls button{
+    border:none;
+    color:white;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.12);
+    padding:12px 22px;
+    border-radius:20px;
+    cursor:pointer;
+    backdrop-filter: blur(18px);
+    transition:0.35s ease;
+    font-size:14px;
+    letter-spacing:.3px;
+}
+
+.controls button:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,0.14);
+}
+
+.controls button.active{
+    background:linear-gradient(135deg,#5aa2ff,#7c4dff);
+    box-shadow:0 10px 30px rgba(84,131,255,0.35);
+}
+
+.weather-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:22px;
+    width:min(1600px,95vw);
+}
+
+.card{
+    position:relative;
+    height:540px;
+    border-radius:38px;
+    overflow:hidden;
+    padding:28px;
+    background:rgba(18,22,34,0.72);
+    border:1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(30px) saturate(160%);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 20px 60px rgba(0,0,0,0.45);
+    transition:0.5s ease;
+}
+
+.card:hover{
+    transform:translateY(-10px) scale(1.02);
+    box-shadow:
+        0 30px 80px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(
+        180deg,
+        rgba(255,255,255,0.08),
+        transparent 35%
+    );
+    pointer-events:none;
+}
+
+.card-top{
+    position:relative;
+    z-index:10;
+}
+
+.city{
+    font-size:15px;
+    color:var(--sub);
+    margin-bottom:8px;
+}
+
+.temp{
+    font-size:72px;
+    font-weight:700;
+    letter-spacing:-4px;
+}
+
+.desc{
+    margin-top:6px;
+    color:rgba(255,255,255,0.72);
+    font-size:18px;
+}
+
+.scene{
+    position:absolute;
+    inset:0;
+}
+
+/* SUNNY */
+
+.sun{
+    position:absolute;
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    background:radial-gradient(circle,#fff6c9,#ffc83d 70%);
+    top:110px;
+    left:50%;
+    transform:translateX(-50%);
+    box-shadow:
+        0 0 60px rgba(255,211,87,0.9),
+        0 0 120px rgba(255,188,47,0.6);
+    animation:pulse 4s infinite ease-in-out;
+}
+
+.sun-glow{
+    position:absolute;
+    width:280px;
+    height:280px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,203,82,.45),transparent 70%);
+    top:40px;
+    left:50%;
+    transform:translateX(-50%);
+    animation:rotate 20s linear infinite;
+}
+
+.ray{
+    position:absolute;
+    width:4px;
+    height:48px;
+    background:linear-gradient(to bottom,#fff7d2,transparent);
+    left:50%;
+    top:180px;
+    transform-origin:center -30px;
+    border-radius:10px;
+    opacity:.8;
+}
+
+.r1{ transform:translateX(-50%) rotate(0deg);}
+.r2{ transform:translateX(-50%) rotate(45deg);}
+.r3{ transform:translateX(-50%) rotate(90deg);}
+.r4{ transform:translateX(-50%) rotate(135deg);}
+.r5{ transform:translateX(-50%) rotate(180deg);}
+.r6{ transform:translateX(-50%) rotate(225deg);}
+.r7{ transform:translateX(-50%) rotate(270deg);}
+.r8{ transform:translateX(-50%) rotate(315deg);}
+
+/* WIND */
+
+.cloud{
+    position:absolute;
+    width:160px;
+    height:60px;
+    background:rgba(255,255,255,0.12);
+    border-radius:60px;
+    backdrop-filter: blur(12px);
+}
+
+.cloud::before,
+.cloud::after{
+    content:"";
+    position:absolute;
+    background:inherit;
+    border-radius:50%;
+}
+
+.cloud::before{
+    width:70px;
+    height:70px;
+    left:20px;
+    top:-25px;
+}
+
+.cloud::after{
+    width:90px;
+    height:90px;
+    right:18px;
+    top:-35px;
+}
+
+.c1{
+    top:120px;
+    left:-20px;
+    animation:cloudMove 10s linear infinite;
+}
+
+.c2{
+    top:200px;
+    left:-80px;
+    transform:scale(.7);
+    animation:cloudMove 15s linear infinite;
+}
+
+.wind-line{
+    position:absolute;
+    height:2px;
+    background:linear-gradient(to right,transparent,rgba(255,255,255,.7),transparent);
+    border-radius:10px;
+    animation:wind 3s infinite ease-in-out;
+}
+
+.w1{ width:120px; top:320px; left:40px; }
+.w2{ width:90px; top:350px; left:90px; animation-delay:1s;}
+.w3{ width:140px; top:390px; left:30px; animation-delay:2s;}
+
+.tree{
+    position:absolute;
+    bottom:60px;
+    left:50%;
+    transform:translateX(-50%);
+}
+
+.trunk{
+    width:18px;
+    height:110px;
+    background:#5f3d25;
+    margin:auto;
+    border-radius:10px;
+}
+
+.leaf{
+    width:120px;
+    height:120px;
+    background:linear-gradient(180deg,#4ce28d,#1f9f63);
+    border-radius:50%;
+    margin-top:-80px;
+    animation:sway 2.5s ease-in-out infinite;
+    transform-origin:bottom center;
+    box-shadow:0 0 40px rgba(0,255,157,.18);
+}
+
+/* RAIN */
+
+.rain-drop{
+    position:absolute;
+    width:2px;
+    height:24px;
+    background:linear-gradient(to bottom,rgba(255,255,255,.9),transparent);
+    border-radius:10px;
+    animation:rain 1s linear infinite;
+}
+
+.puddle{
+    position:absolute;
+    bottom:45px;
+    left:50%;
+    transform:translateX(-50%);
+    width:180px;
+    height:28px;
+    background:rgba(108,163,255,.28);
+    border-radius:50%;
+    filter:blur(2px);
+    animation:ripple 2s infinite;
+}
+
+.lightning{
+    position:absolute;
+    top:110px;
+    left:50%;
+    width:14px;
+    height:130px;
+    background:white;
+    clip-path: polygon(40% 0%,100% 0%,58% 48%,90% 48%,0% 100%,38% 60%,12% 60%);
+    filter:drop-shadow(0 0 18px white);
+    opacity:0;
+    animation:flash 5s infinite;
+}
+
+/* SNOW */
+
+.snowflake{
+    position:absolute;
+    color:white;
+    font-size:14px;
+    opacity:.85;
+    animation:snow linear infinite;
+}
+
+.snow-ground{
+    position:absolute;
+    bottom:0;
+    width:100%;
+    height:80px;
+    background:linear-gradient(to top,#f5f7ff,rgba(255,255,255,.15));
+    border-top-left-radius:50%;
+    border-top-right-radius:50%;
+    filter:blur(.2px);
+}
+
+/* ACTIVE STATES */
+
+.card.dimmed{
+    opacity:.35;
+    transform:scale(.96);
+}
+
+.card.active{
+    opacity:1;
+    transform:scale(1.03);
+}
+
+/* ANIMATIONS */
+
+@keyframes pulse{
+    0%,100%{ transform:translateX(-50%) scale(1);}
+    50%{ transform:translateX(-50%) scale(1.08);}
+}
+
+@keyframes rotate{
+    from{ transform:translateX(-50%) rotate(0deg);}
+    to{ transform:translateX(-50%) rotate(360deg);}
+}
+
+@keyframes cloudMove{
+    from{ transform:translateX(-220px);}
+    to{ transform:translateX(420px);}
+}
+
+@keyframes sway{
+    0%,100%{ transform:rotate(-8deg);}
+    50%{ transform:rotate(8deg);}
+}
+
+@keyframes wind{
+    0%{ transform:translateX(-20px); opacity:0;}
+    50%{ opacity:1;}
+    100%{ transform:translateX(30px); opacity:0;}
+}
+
+@keyframes rain{
+    from{
+        transform:translateY(-20px);
+        opacity:0;
+    }
+    20%{
+        opacity:1;
+    }
+    to{
+        transform:translateY(500px);
+        opacity:0;
+    }
+}
+
+@keyframes ripple{
+    0%,100%{ transform:translateX(-50%) scaleX(1);}
+    50%{ transform:translateX(-50%) scaleX(1.08);}
+}
+
+@keyframes flash{
+    0%,92%,100%{ opacity:0;}
+    94%{ opacity:1;}
+    95%{ opacity:.2;}
+    96%{ opacity:1;}
+}
+
+@keyframes snow{
+    from{
+        transform:translateY(-20px) rotate(0deg);
+        opacity:0;
+    }
+    10%{
+        opacity:1;
+    }
+    to{
+        transform:translateY(560px) rotate(360deg);
+        opacity:0;
+    }
+}
+
+@media (max-width:1400px){
+    .weather-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media (max-width:780px){
+    body{
+        padding:20px;
+    }
+
+    .weather-grid{
+        grid-template-columns:1fr;
+    }
+
+    .card{
+        height:480px;
+    }
+
+    .title{
+        font-size:30px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="title">Weather Experience</div>
+
+<div class="controls">
+    <button class="active" data-target="all">全部</button>
+    <button data-target="sunny">晴天</button>
+    <button data-target="windy">大风</button>
+    <button data-target="rainy">暴雨</button>
+    <button data-target="snowy">暴雪</button>
+</div>
+
+<div class="weather-grid">
+
+    <!-- SUNNY -->
+    <div class="card sunny active">
+        <div class="card-top">
+            <div class="city">Cupertino</div>
+            <div class="temp">29°</div>
+            <div class="desc">Sunny Glow</div>
+        </div>
+
+        <div class="scene">
+            <div class="sun-glow"></div>
+            <div class="sun"></div>
+
+            <div class="ray r1"></div>
+            <div class="ray r2"></div>
+            <div class="ray r3"></div>
+            <div class="ray r4"></div>
+            <div class="ray r5"></div>
+            <div class="ray r6"></div>
+            <div class="ray r7"></div>
+            <div class="ray r8"></div>
+        </div>
+    </div>
+
+    <!-- WIND -->
+    <div class="card windy active">
+        <div class="card-top">
+            <div class="city">Reykjavik</div>
+            <div class="temp">14°</div>
+            <div class="desc">Heavy Wind</div>
+        </div>
+
+        <div class="scene">
+            <div class="cloud c1"></div>
+            <div class="cloud c2"></div>
+
+            <div class="wind-line w1"></div>
+            <div class="wind-line w2"></div>
+            <div class="wind-line w3"></div>
+
+            <div class="tree">
+                <div class="leaf"></div>
+                <div class="trunk"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RAIN -->
+    <div class="card rainy active">
+        <div class="card-top">
+            <div class="city">Singapore</div>
+            <div class="temp">22°</div>
+            <div class="desc">Thunder Storm</div>
+        </div>
+
+        <div class="scene">
+            <div class="lightning"></div>
+            <div class="puddle"></div>
+        </div>
+    </div>
+
+    <!-- SNOW -->
+    <div class="card snowy active">
+        <div class="card-top">
+            <div class="city">Hokkaido</div>
+            <div class="temp">-8°</div>
+            <div class="desc">Blizzard</div>
+        </div>
+
+        <div class="scene">
+            <div class="snow-ground"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+/* ---------- Rain Generation ---------- */
+
+const rainCard = document.querySelector('.rainy .scene');
+
+for(let i=0;i<90;i++){
+    const drop = document.createElement('div');
+    drop.classList.add('rain-drop');
+
+    drop.style.left = Math.random() * 100 + '%';
+    drop.style.top = Math.random() * -600 + 'px';
+    drop.style.animationDelay = Math.random() * 1 + 's';
+    drop.style.animationDuration = (.6 + Math.random() * .5) + 's';
+
+    rainCard.appendChild(drop);
+}
+
+/* ---------- Snow Generation ---------- */
+
+const snowScene = document.querySelector('.snowy .scene');
+
+for(let i=0;i<70;i++){
+    const snow = document.createElement('div');
+    snow.classList.add('snowflake');
+
+    snow.innerHTML = '❄';
+
+    snow.style.left = Math.random() * 100 + '%';
+    snow.style.top = Math.random() * -500 + 'px';
+    snow.style.fontSize = (10 + Math.random() * 14) + 'px';
+    snow.style.animationDuration = (5 + Math.random() * 8) + 's';
+    snow.style.animationDelay = Math.random() * 5 + 's';
+
+    snowScene.appendChild(snow);
+}
+
+/* ---------- Weather Switch ---------- */
+
+const buttons = document.querySelectorAll('.controls button');
+const cards = document.querySelectorAll('.card');
+
+buttons.forEach(btn=>{
+
+    btn.addEventListener('click',()=>{
+
+        buttons.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const target = btn.dataset.target;
+
+        cards.forEach(card=>{
+
+            if(target === 'all'){
+                card.classList.remove('dimmed');
+                card.classList.add('active');
+            }else{
+                if(card.classList.contains(target)){
+                    card.classList.remove('dimmed');
+                    card.classList.add('active');
+                }else{
+                    card.classList.add('dimmed');
+                    card.classList.remove('active');
+                }
+            }
+        });
+
+    });
+
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天气卡片 - iOS 18 风格</title>
+    <style>
+        :root {
+            --bg-deep: #0a0a10;
+            --card-bg: rgba(22, 22, 32, 0.55);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --card-hover-border: rgba(255, 255, 255, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-tertiary: rgba(255, 255, 255, 0.45);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+            --shadow-glow-sunny: 0 0 40px rgba(255, 170, 40, 0.35);
+            --shadow-glow-windy: 0 0 40px rgba(140, 200, 240, 0.3);
+            --shadow-glow-rain: 0 0 40px rgba(80, 140, 220, 0.35);
+            --shadow-glow-snow: 0 0 40px rgba(200, 210, 240, 0.35);
+            --transition-smooth: 0.45s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg-deep);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'PingFang SC', 'Helvetica Neue', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* 动态光斑背景 */
+        .bg-aurora {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.5;
+            animation-timing-function: ease-in-out;
+            animation-iteration-count: infinite;
+            will-change: transform;
+        }
+        .bg-orb-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(100, 130, 255, 0.55) 0%, transparent 70%);
+            top: -15%;
+            left: 5%;
+            animation-name: floatOrb1;
+            animation-duration: 18s;
+        }
+        .bg-orb-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(180, 100, 240, 0.45) 0%, transparent 70%);
+            top: 40%;
+            right: -8%;
+            animation-name: floatOrb2;
+            animation-duration: 22s;
+        }
+        .bg-orb-3 {
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(60, 150, 220, 0.5) 0%, transparent 70%);
+            bottom: -20%;
+            left: 25%;
+            animation-name: floatOrb3;
+            animation-duration: 20s;
+        }
+        .bg-orb-4 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(255, 140, 80, 0.35) 0%, transparent 70%);
+            top: 10%;
+            right: 20%;
+            animation-name: floatOrb4;
+            animation-duration: 25s;
+        }
+        .bg-orb-5 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(140, 200, 255, 0.4) 0%, transparent 70%);
+            bottom: 10%;
+            left: 55%;
+            animation-name: floatOrb5;
+            animation-duration: 16s;
+        }
+
+        @keyframes floatOrb1 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(80px, 50px) scale(1.15);
+            }
+            50% {
+                transform: translate(30px, -30px) scale(0.9);
+            }
+            75% {
+                transform: translate(-40px, 60px) scale(1.08);
+            }
+        }
+        @keyframes floatOrb2 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(-70px, -40px) scale(1.12);
+            }
+            66% {
+                transform: translate(50px, 30px) scale(0.88);
+            }
+        }
+        @keyframes floatOrb3 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            30% {
+                transform: translate(60px, -50px) scale(1.1);
+            }
+            60% {
+                transform: translate(-50px, 20px) scale(0.92);
+            }
+            85% {
+                transform: translate(20px, -20px) scale(1.05);
+            }
+        }
+        @keyframes floatOrb4 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            40% {
+                transform: translate(-55px, 45px) scale(1.18);
+            }
+            70% {
+                transform: translate(35px, -35px) scale(0.85);
+            }
+        }
+        @keyframes floatOrb5 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            20% {
+                transform: translate(45px, -30px) scale(1.14);
+            }
+            55% {
+                transform: translate(-30px, 40px) scale(0.9);
+            }
+            80% {
+                transform: translate(15px, -15px) scale(1.06);
+            }
+        }
+
+        /* 主容器 */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* 标题 */
+        .page-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            opacity: 0.85;
+            text-align: center;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+        }
+        .page-title .dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin: 0 2px;
+            vertical-align: middle;
+            position: relative;
+            top: -1px;
+            animation: dotPulse 2s ease-in-out infinite;
+        }
+        .dot:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+        .dot:nth-child(3) {
+            animation-delay: 0.8s;
+        }
+        @keyframes dotPulse {
+            0%,
+            100% {
+                opacity: 0.35;
+                transform: scale(0.7);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.3);
+            }
+        }
+
+        /* 卡片行 */
+        .cards-row {
+            display: flex;
+            gap: 18px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: nowrap;
+            align-items: stretch;
+            perspective: 1200px;
+        }
+
+        /* 单张卡片 */
+        .weather-card {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+            max-width: 280px;
+            height: 440px;
+            border-radius: 24px;
+            background: var(--card-bg);
+            backdrop-filter: blur(28px) saturate(1.3);
+            -webkit-backdrop-filter: blur(28px) saturate(1.3);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-sm), var(--shadow-md);
+            cursor: pointer;
+            overflow: hidden;
+            transition: all var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+        }
+        .weather-card:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: var(--shadow-sm), var(--shadow-lg);
+            transform: translateY(-4px);
+            z-index: 5;
+        }
+        .weather-card:active {
+            transform: scale(0.975);
+            transition: transform 0.15s ease;
+        }
+        .weather-card.active {
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: var(--shadow-sm), var(--shadow-lg);
+            transform: translateY(-6px) scale(1.025);
+            z-index: 10;
+        }
+        .weather-card.active.card-sunny {
+            box-shadow: var(--shadow-sm), var(--shadow-lg), var(--shadow-glow-sunny);
+            border-color: rgba(255, 180, 60, 0.55);
+        }
+        .weather-card.active.card-windy {
+            box-shadow: var(--shadow-sm), var(--shadow-lg), var(--shadow-glow-windy);
+            border-color: rgba(150, 210, 250, 0.5);
+        }
+        .weather-card.active.card-rain {
+            box-shadow: var(--shadow-sm), var(--shadow-lg), var(--shadow-glow-rain);
+            border-color: rgba(100, 160, 240, 0.5);
+        }
+        .weather-card.active.card-snow {
+            box-shadow: var(--shadow-sm), var(--shadow-lg), var(--shadow-glow-snow);
+            border-color: rgba(210, 220, 250, 0.5);
+        }
+
+        /* Canvas容器 */
+        .canvas-wrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            border-radius: 24px 24px 0 0;
+            min-height: 280px;
+        }
+        .canvas-wrapper canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 卡片信息区 */
+        .card-info {
+            padding: 14px 18px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            z-index: 2;
+            background: rgba(0, 0, 0, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 0 0 24px 24px;
+        }
+        .card-info .weather-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+        .card-info .temperature {
+            font-size: 2.4rem;
+            font-weight: 300;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+        .card-info .temperature sup {
+            font-size: 1.2rem;
+            font-weight: 400;
+            opacity: 0.7;
+            margin-left: 2px;
+        }
+        .card-info .sub-info {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            letter-spacing: 0.02em;
+        }
+
+        /* 按钮行 */
+        .buttons-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            z-index: 2;
+        }
+        .btn-weather {
+            padding: 10px 22px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(30, 30, 45, 0.5);
+            backdrop-filter: blur(18px) saturate(1.2);
+            -webkit-backdrop-filter: blur(18px) saturate(1.2);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+            font-family: inherit;
+        }
+        .btn-weather:hover {
+            background: rgba(50, 50, 70, 0.6);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .btn-weather:active {
+            transform: scale(0.94);
+            transition: transform 0.12s ease;
+        }
+        .btn-weather.btn-active {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.55);
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        .btn-weather.btn-active.btn-sunny {
+            background: rgba(255, 160, 40, 0.22);
+            border-color: rgba(255, 170, 60, 0.6);
+            box-shadow: 0 4px 22px rgba(255, 140, 30, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+        .btn-weather.btn-active.btn-windy {
+            background: rgba(120, 190, 240, 0.2);
+            border-color: rgba(150, 210, 250, 0.55);
+            box-shadow: 0 4px 22px rgba(100, 180, 230, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        .btn-weather.btn-active.btn-rain {
+            background: rgba(70, 130, 210, 0.22);
+            border-color: rgba(100, 160, 240, 0.55);
+            box-shadow: 0 4px 22px rgba(60, 120, 200, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        .btn-weather.btn-active.btn-snow {
+            background: rgba(190, 200, 230, 0.2);
+            border-color: rgba(210, 220, 250, 0.55);
+            box-shadow: 0 4px 22px rgba(170, 190, 220, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* 响应式 */
+        @media (max-width: 960px) {
+            .cards-row {
+                flex-wrap: wrap;
+                gap: 14px;
+            }
+            .weather-card {
+                flex: 0 0 calc(50% - 10px);
+                max-width: calc(50% - 10px);
+                min-width: 160px;
+                height: 380px;
+            }
+            .card-info .temperature {
+                font-size: 2rem;
+            }
+            .canvas-wrapper {
+                min-height: 220px;
+            }
+        }
+        @media (max-width: 560px) {
+            .cards-row {
+                flex-direction: column;
+                align-items: center;
+            }
+            .weather-card {
+                flex: 0 0 auto;
+                max-width: 320px;
+                width: 100%;
+                height: 360px;
+            }
+            .canvas-wrapper {
+                min-height: 200px;
+            }
+            .page-title {
+                font-size: 1.3rem;
+            }
+            .btn-weather {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 动态光斑背景 -->
+    <div class="bg-aurora">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+        <div class="bg-orb bg-orb-4"></div>
+        <div class="bg-orb bg-orb-5"></div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <div class="page-title">
+            天<span class="dot" style="background:#ffb74d;"></span>气
+            <span class="dot" style="background:#90caf9;"></span>卡
+            <span class="dot" style="background:#ce93d8;"></span>片
+        </div>
+        <!-- 卡片行 -->
+        <div class="cards-row" id="cardsRow">
+            <!-- 动态生成 -->
+        </div>
+        <!-- 按钮行 -->
+        <div class="buttons-row" id="buttonsRow">
+            <button class="btn-weather btn-active btn-sunny" data-weather="sunny">☀️ 晴天</button>
+            <button class="btn-weather btn-windy" data-weather="windy">💨 大风</button>
+            <button class="btn-weather btn-rain" data-weather="rain">⛈️ 暴雨</button>
+            <button class="btn-weather btn-snow" data-weather="snow">❄️ 暴雪</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ============ 卡片配置 ============
+            const weatherConfigs = [
+                { id: 'sunny', label: '晴天', emoji: '☀️', temp: '28', sub: '晴朗无云 · 紫外线强',
+                    tempColor: '#ffcc80' },
+                { id: 'windy', label: '大风', emoji: '💨', temp: '18', sub: '阵风可达6级 · 注意防风',
+                tempColor: '#b0d8f0' },
+                { id: 'rain', label: '暴雨', emoji: '⛈️', temp: '22', sub: '降水量45mm · 伴有雷电', tempColor: '#90b8e0' },
+                { id: 'snow', label: '暴雪', emoji: '❄️', temp: '-5', sub: '积雪深度15cm · 道路结冰', tempColor: '#d8e4f4' },
+            ];
+
+            const cardsRow = document.getElementById('cardsRow');
+            const buttonsRow = document.getElementById('buttonsRow');
+            let activeWeatherId = 'sunny';
+            let cardDataMap = {}; // 存储每个卡片的引用
+            let globalTime = 0;
+            let animationId;
+
+            // ============ 创建卡片DOM ============
+            weatherConfigs.forEach((config, index) => {
+                const card = document.createElement('div');
+                card.className = `weather-card card-${config.id}`;
+                if (config.id === activeWeatherId) card.classList.add('active');
+                card.dataset.weather = config.id;
+
+                const canvasWrapper = document.createElement('div');
+                canvasWrapper.className = 'canvas-wrapper';
+                const canvas = document.createElement('canvas');
+                canvasWrapper.appendChild(canvas);
+
+                const cardInfo = document.createElement('div');
+                cardInfo.className = 'card-info';
+                cardInfo.innerHTML = `
+                    <span class="weather-label">${config.emoji} ${config.label}</span>
+                    <span class="temperature" style="color:${config.tempColor}">${config.temp}<sup>°C</sup></span>
+                    <span class="sub-info">${config.sub}</span>
+                `;
+
+                card.appendChild(canvasWrapper);
+                card.appendChild(cardInfo);
+                cardsRow.appendChild(card);
+
+                // 存储引用
+                cardDataMap[config.id] = {
+                    card,
+                    canvas,
+                    canvasWrapper,
+                    config,
+                    particles: [],
+                    rainSplashParticles: [],
+                    lightningTimer: 0,
+                    lightningActive: false,
+                    lightningAlpha: 0,
+                    lightningPath: [],
+                    snowAccumulation: 25,
+                    puddleRipples: [],
+                    windLines: [],
+                    treeSwayOffset: Math.random() * Math.PI * 2,
+                    cloudPositions: [],
+                    sunGlowPhase: Math.random() * Math.PI * 2,
+                };
+
+                // 初始化风线
+                const data = cardDataMap[config.id];
+                if (config.id === 'windy') {
+                    for (let i = 0; i < 16; i++) {
+                        data.windLines.push({
+                            y: Math.random() * 0.7,
+                            length: 25 + Math.random() * 80,
+                            speed: 1.5 + Math.random() * 3.5,
+                            alpha: 0.3 + Math.random() * 0.5,
+                            x: Math.random(),
+                        });
+                    }
+                    // 初始化云朵
+                    for (let i = 0; i < 5; i++) {
+                        data.cloudPositions.push({
+                            x: Math.random(),
+                            y: 0.08 + Math.random() * 0.35,
+                            size: 0.7 + Math.random() * 1.3,
+                            speed: 0.15 + Math.random() * 0.5,
+                            alpha: 0.5 + Math.random() * 0.4,
+                        });
+                    }
+                }
+                if (config.id === 'rain') {
+                    data.lightningTimer = 2 + Math.random() * 4;
+                }
+                if (config.id === 'snow') {
+                    data.snowAccumulation = 18 + Math.random() * 20;
+                }
+            });
+
+            // ============ 调整Canvas尺寸 ============
+            function resizeAllCanvases() {
+                Object.values(cardDataMap).forEach(data => {
+                    const rect = data.canvasWrapper.getBoundingClientRect();
+                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                    const w = rect.width;
+                    const h = rect.height;
+                    if (data.canvas.width !== w * dpr || data.canvas.height !== h * dpr) {
+                        data.canvas.width = w * dpr;
+                        data.canvas.height = h * dpr;
+                        data.canvas.style.width = w + 'px';
+                        data.canvas.style.height = h + 'px';
+                        data._w = w;
+                        data._h = h;
+                        data._dpr = dpr;
+                    }
+                });
+            }
+
+            // ============ 绘制函数 ============
+            function drawSunny(ctx, w, h, t, data) {
+                const cx = w * 0.5;
+                const cy = h * 0.38;
+                const sunRadius = Math.min(w, h) * 0.18;
+
+                // 外层光晕 - 脉冲
+                const pulse = 1 + Math.sin(t * 1.8 + data.sunGlowPhase) * 0.12 + Math.sin(t * 3.1) * 0.06;
+                const glowGrad1 = ctx.createRadialGradient(cx, cy, sunRadius * 0.75, cx, cy, sunRadius * 2.6 * pulse);
+                glowGrad1.addColorStop(0, 'rgba(255,200,80,0.6)');
+                glowGrad1.addColorStop(0.35, 'rgba(255,160,40,0.3)');
+                glowGrad1.addColorStop(0.65, 'rgba(255,120,20,0.08)');
+                glowGrad1.addColorStop(1, 'rgba(255,80,10,0)');
+                ctx.fillStyle = glowGrad1;
+                ctx.beginPath();
+                ctx.arc(cx, cy, sunRadius * 2.6 * pulse, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 第二层光晕
+                const glowGrad2 = ctx.createRadialGradient(cx, cy, sunRadius * 0.5, cx, cy, sunRadius * 1.8);
+                glowGrad2.addColorStop(0, 'rgba(255,240,200,0.7)');
+                glowGrad2.addColorStop(0.4, 'rgba(255,190,80,0.35)');
+                glowGrad2.addColorStop(1, 'rgba(255,150,40,0)');
+                ctx.fillStyle = glowGrad2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, sunRadius * 1.8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 太阳本体
+                const sunGrad = ctx.createRadialGradient(cx - sunRadius * 0.15, cy - sunRadius * 0.2, sunRadius * 0.05,
+                    cx, cy, sunRadius);
+                sunGrad.addColorStop(0, '#fffef5');
+                sunGrad.addColorStop(0.3, '#fff8d0');
+                sunGrad.addColorStop(0.65, '#ffcc60');
+                sunGrad.addColorStop(1, '#ff9900');
+                ctx.fillStyle = sunGrad;
+                ctx.beginPath();
+                ctx.arc(cx, cy, sunRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 内层亮斑
+                const innerGlow = ctx.createRadialGradient(cx - sunRadius * 0.2, cy - sunRadius * 0.25, sunRadius * 0.02,
+                    cx, cy, sunRadius * 0.55);
+                innerGlow.addColorStop(0, 'rgba(255,255,255,0.9)');
+                innerGlow.addColorStop(0.5, 'rgba(255,255,240,0.3)');
+                innerGlow.addColorStop(1, 'rgba(255,220,150,0)');
+                ctx.fillStyle = innerGlow;
+                ctx.beginPath();
+                ctx.arc(cx, cy, sunRadius * 0.55, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 光线
+                const rayCount = 16;
+                const rayRotation = t * 0.25;
+                for (let i = 0; i < rayCount; i++) {
+                    const angle = (i / rayCount) * Math.PI * 2 + rayRotation;
+                    const innerR = sunRadius * 0.9;
+                    const outerR = sunRadius * (1.6 + Math.sin(t * 2.5 + i * 0.7) * 0.35);
+                    const rayAlpha = 0.25 + Math.sin(t * 3 + i * 1.2) * 0.15;
+                    const grad = ctx.createLinearGradient(
+                        cx + Math.cos(angle) * innerR, cy + Math.sin(angle) * innerR,
+                        cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR
+                    );
+                    grad.addColorStop(0, `rgba(255,240,200,${rayAlpha})`);
+                    grad.addColorStop(1, 'rgba(255,200,100,0)');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    const perpAngle = angle + Math.PI / 2;
+                    const rayWidth = sunRadius * 0.06;
+                    ctx.moveTo(cx + Math.cos(angle) * innerR + Math.cos(perpAngle) * rayWidth,
+                        cy + Math.sin(angle) * innerR + Math.sin(perpAngle) * rayWidth);
+                    ctx.lineTo(cx + Math.cos(angle) * outerR + Math.cos(perpAngle) * rayWidth * 0.3,
+                        cy + Math.sin(angle) * outerR + Math.sin(perpAngle) * rayWidth * 0.3);
+                    ctx.lineTo(cx + Math.cos(angle) * outerR - Math.cos(perpAngle) * rayWidth * 0.3,
+                        cy + Math.sin(angle) * outerR - Math.sin(perpAngle) * rayWidth * 0.3);
+                    ctx.lineTo(cx + Math.cos(angle) * innerR - Math.cos(perpAngle) * rayWidth,
+                        cy + Math.sin(angle) * innerR - Math.sin(perpAngle) * rayWidth);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // 微小光粒子
+                const particleCount = 20;
+                for (let i = 0; i < particleCount; i++) {
+                    const pAngle = (i / particleCount) * Math.PI * 2 + t * 0.6;
+                    const pDist = sunRadius * (1.3 + Math.sin(t * 4 + i * 2.7) * 0.7);
+                    const px = cx + Math.cos(pAngle) * pDist;
+                    const py = cy + Math.sin(pAngle) * pDist;
+                    const pAlpha = 0.35 + Math.sin(t * 5 + i) * 0.3;
+                    const pSize = 2 + Math.abs(Math.sin(t * 3.5 + i)) * 3;
+                    ctx.fillStyle = `rgba(255,240,210,${Math.max(0,pAlpha)})`;
+                    ctx.beginPath();
+                    ctx.arc(px, py, pSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function drawWindy(ctx, w, h, t, data) {
+                // 天空微妙的蓝灰
+                const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+                skyGrad.addColorStop(0, 'rgba(60,70,90,0.25)');
+                skyGrad.addColorStop(0.5, 'rgba(50,60,80,0.15)');
+                skyGrad.addColorStop(1, 'rgba(40,48,60,0.25)');
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                // 云朵
+                data.cloudPositions.forEach(cloud => {
+                    cloud.x += cloud.speed * 0.004;
+                    if (cloud.x > 1.15) cloud.x = -0.25;
+                    const cx = cloud.x * w;
+                    const cy = cloud.y * h;
+                    const baseSize = Math.min(w, h) * 0.13 * cloud.size;
+                    ctx.fillStyle = `rgba(210,215,225,${cloud.alpha})`;
+                    // 多个椭圆组成云朵
+                    const offsets = [
+                        [0, 0],
+                        [baseSize * 0.7, -baseSize * 0.25],
+                        [-baseSize * 0.6, -baseSize * 0.15],
+                        [baseSize * 0.3, baseSize * 0.2],
+                        [-baseSize * 0.35, baseSize * 0.15],
+                        [baseSize * 1.0, -baseSize * 0.05],
+                        [-baseSize * 0.85, -baseSize * 0.05],
+                    ];
+                    offsets.forEach(([ox, oy]) => {
+                        ctx.beginPath();
+                        ctx.arc(cx + ox, cy + oy, baseSize * 0.55, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    // 连接处
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, baseSize * 0.7, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // 风线
+                ctx.lineCap = 'round';
+                data.windLines.forEach(line => {
+                    line.x -= line.speed * 0.006;
+                    if (line.x < -0.15) {
+                        line.x = 1.05;
+                        line.y = Math.random() * 0.7;
+                        line.length = 25 + Math.random() * 80;
+                        line.alpha = 0.3 + Math.random() * 0.5;
+                    }
+                    const lx = line.x * w;
+                    const ly = line.y * h;
+                    const grad = ctx.createLinearGradient(lx, ly, lx - line.length, ly);
+                    grad.addColorStop(0, `rgba(255,255,255,${line.alpha})`);
+                    grad.addColorStop(1, 'rgba(255,255,255,0)');
+                    ctx.strokeStyle = grad;
+                    ctx.lineWidth = 1.2 + Math.random() * 0.6;
+                    ctx.beginPath();
+                    ctx.moveTo(lx, ly);
+                    ctx.lineTo(lx - line.length, ly + (Math.random() - 0.5) * 8);
+                    ctx.stroke();
+                });
+                ctx.lineCap = 'butt';
+
+                // 树木 - 左侧
+                const treeBaseX = w * 0.28;
+                const treeBaseY = h * 0.78;
+                const swayAmp = 0.04;
+                const sway = Math.sin(t * 2.8 + data.treeSwayOffset) * swayAmp;
+                const sway2 = Math.sin(t * 3.5 + data.treeSwayOffset + 1) * swayAmp * 0.7;
+
+                drawTree(ctx, treeBaseX, treeBaseY, h * 0.5, sway, '#5a4a3a', '#6b8a50');
+                // 右侧小树
+                const tree2X = w * 0.68;
+                const tree2Y = h * 0.82;
+                drawTree(ctx, tree2X, tree2Y, h * 0.35, sway2, '#4a3a2e', '#7a9a5a');
+
+                // 飘落叶子
+                const leafCount = 8;
+                for (let i = 0; i < leafCount; i++) {
+                    const lx = ((t * 0.8 + i * 1.7) % 1.3 - 0.15) * w;
+                    const ly = h * 0.25 + ((i * 0.55 + Math.sin(t * 1.5 + i) * 0.3) % 1) * h * 0.55;
+                    const leafSize = 6 + Math.random() * 10;
+                    const leafRot = t * 4 + i * 1.3;
+                    ctx.save();
+                    ctx.translate(lx, ly);
+                    ctx.rotate(leafRot);
+                    ctx.fillStyle = 'rgba(180,160,100,0.7)';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, leafSize, leafSize * 0.4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            function drawTree(ctx, bx, by, height, sway, trunkColor, crownColor) {
+                const trunkW = height * 0.08;
+                // 树干
+                const trunkGrad = ctx.createLinearGradient(bx - trunkW, 0, bx + trunkW, 0);
+                trunkGrad.addColorStop(0, trunkColor);
+                trunkGrad.addColorStop(0.5, '#8a7a6a');
+                trunkGrad.addColorStop(1, trunkColor);
+                ctx.fillStyle = trunkGrad;
+                ctx.beginPath();
+                ctx.moveTo(bx - trunkW * 0.7, by);
+                ctx.lineTo(bx + trunkW * 0.7, by);
+                ctx.lineTo(bx + trunkW * 0.4 + sway * height * 0.4, by - height * 0.7);
+                ctx.lineTo(bx - trunkW * 0.4 + sway * height * 0.4, by - height * 0.7);
+                ctx.closePath();
+                ctx.fill();
+
+                // 树冠
+                const crownCY = by - height * 0.7;
+                const crownR = height * 0.32;
+                const crownGrad = ctx.createRadialGradient(bx + sway * height * 0.35, crownCY - crownR * 0.2, crownR * 0.1,
+                    bx + sway * height * 0.3, crownCY, crownR);
+                crownGrad.addColorStop(0, '#9cba7a');
+                crownGrad.addColorStop(0.6, crownColor);
+                crownGrad.addColorStop(1, '#4a6a3a');
+                ctx.fillStyle = crownGrad;
+                ctx.beginPath();
+                ctx.arc(bx + sway * height * 0.35, crownCY, crownR, 0, Math.PI * 2);
+                ctx.fill();
+                // 第二个树冠团
+                ctx.beginPath();
+                ctx.arc(bx + sway * height * 0.2 - crownR * 0.5, crownCY + crownR * 0.15, crownR * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(bx + sway * height * 0.4 + crownR * 0.4, crownCY - crownR * 0.1, crownR * 0.65, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function drawRain(ctx, w, h, t, data) {
+                // 深色天空
+                const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+                skyGrad.addColorStop(0, 'rgba(18,20,30,0.55)');
+                skyGrad.addColorStop(0.6, 'rgba(22,24,36,0.4)');
+                skyGrad.addColorStop(1, 'rgba(28,30,42,0.5)');
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                // 云层
+                const cloudBaseY = h * 0.22;
+                for (let i = 0; i < 7; i++) {
+                    const cx = ((i / 6) * w + Math.sin(t * 0.3 + i) * w * 0.04);
+                    const cy = cloudBaseY + Math.sin(t * 0.5 + i) * 12;
+                    const cr = w * 0.13;
+                    const cgrad = ctx.createRadialGradient(cx, cy, cr * 0.1, cx, cy, cr);
+                    cgrad.addColorStop(0, 'rgba(55,58,72,0.8)');
+                    cgrad.addColorStop(0.5, 'rgba(40,42,55,0.5)');
+                    cgrad.addColorStop(1, 'rgba(30,32,44,0)');
+                    ctx.fillStyle = cgrad;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // 闪电
+                data.lightningTimer -= 0.016;
+                if (data.lightningTimer <= 0 && !data.lightningActive) {
+                    data.lightningActive = true;
+                    data.lightningAlpha = 1;
+                    data.lightningTimer = 2.5 + Math.random() * 6;
+                    // 生成闪电路径
+                    const startX = w * (0.3 + Math.random() * 0.4);
+                    const startY = cloudBaseY;
+                    const endX = startX + (Math.random() - 0.5) * w * 0.3;
+                    const endY = h * 0.78;
+                    data.lightningPath = generateLightningPath(startX, startY, endX, endY, 8);
+                }
+                if (data.lightningActive) {
+                    data.lightningAlpha -= 0.06;
+                    if (data.lightningAlpha <= 0) {
+                        data.lightningActive = false;
+                        data.lightningAlpha = 0;
+                    }
+                    // 绘制闪电
+                    const alpha = Math.max(0, data.lightningAlpha);
+                    if (data.lightningPath.length > 1) {
+                        // 外层发光
+                        ctx.strokeStyle = `rgba(200,210,255,${alpha * 0.5})`;
+                        ctx.lineWidth = 8;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.shadowColor = `rgba(180,200,255,${alpha * 0.9})`;
+                        ctx.shadowBlur = 30;
+                        ctx.beginPath();
+                        ctx.moveTo(data.lightningPath[0].x, data.lightningPath[0].y);
+                        for (let i = 1; i < data.lightningPath.length; i++) {
+                            ctx.lineTo(data.lightningPath[i].x, data.lightningPath[i].y);
+                        }
+                        ctx.stroke();
+                        // 内层
+                        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+                        ctx.lineWidth = 2.5;
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = `rgba(255,255,255,${alpha})`;
+                        ctx.beginPath();
+                        ctx.moveTo(data.lightningPath[0].x, data.lightningPath[0].y);
+                        for (let i = 1; i < data.lightningPath.length; i++) {
+                            ctx.lineTo(data.lightningPath[i].x, data.lightningPath[i].y);
+                        }
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                    }
+                    // 全屏闪光
+                    const flashAlpha = alpha * 0.2;
+                    ctx.fillStyle = `rgba(200,210,240,${flashAlpha})`;
+                    ctx.fillRect(0, 0, w, h);
+                }
+
+                // 雨滴
+                const rainDropCount = 90;
+                // 确保粒子数组足够
+                while (data.particles.length < rainDropCount) {
+                    data.particles.push({
+                        x: Math.random() * w,
+                        y: Math.random() * h * 0.9,
+                        speed: 9 + Math.random() * 16,
+                        length: 12 + Math.random() * 22,
+                        alpha: 0.5 + Math.random() * 0.45,
+                    });
+                }
+                if (data.particles.length > rainDropCount) data.particles.length = rainDropCount;
+
+                ctx.lineCap = 'round';
+                data.particles.forEach(p => {
+                    p.y += p.speed;
+                    if (p.y > h * 0.88) {
+                        p.y = -p.length;
+                        p.x = Math.random() * w;
+                        // 产生水洼涟漪
+                        if (Math.random() < 0.35) {
+                            data.puddleRipples.push({
+                                x: p.x,
+                                y: h * 0.87 + Math.random() * h * 0.08,
+                                radius: 2,
+                                alpha: 0.7,
+                                maxRadius: 8 + Math.random() * 16,
+                            });
+                        }
+                    }
+                    const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.length);
+                    grad.addColorStop(0, `rgba(180,200,230,${p.alpha})`);
+                    grad.addColorStop(1, `rgba(140,170,210,0)`);
+                    ctx.strokeStyle = grad;
+                    ctx.lineWidth = 1.1;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p.x, p.y + p.length);
+                    ctx.stroke();
+                });
+                ctx.lineCap = 'butt';
+
+                // 水洼
+                const puddleY = h * 0.88;
+                const puddleGrad = ctx.createLinearGradient(0, puddleY - 5, 0, puddleY + 25);
+                puddleGrad.addColorStop(0, 'rgba(60,80,110,0.5)');
+                puddleGrad.addColorStop(0.3, 'rgba(50,70,100,0.6)');
+                puddleGrad.addColorStop(1, 'rgba(30,40,55,0.3)');
+                ctx.fillStyle = puddleGrad;
+                ctx.beginPath();
+                ctx.ellipse(w * 0.5, puddleY, w * 0.7, 14, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 涟漪
+                const ripplesToKeep = [];
+                data.puddleRipples.forEach(rip => {
+                    rip.radius += 0.8;
+                    rip.alpha -= 0.025;
+                    if (rip.alpha > 0 && rip.radius < rip.maxRadius) {
+                        ripplesToKeep.push(rip);
+                        ctx.strokeStyle = `rgba(160,190,220,${rip.alpha})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath();
+                        ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                });
+                data.puddleRipples = ripplesToKeep;
+            }
+
+            function generateLightningPath(x1, y1, x2, y2, segments) {
+                const points = [{ x: x1, y: y1 }];
+                const dx = (x2 - x1) / segments;
+                const dy = (y2 - y1) / segments;
+                for (let i = 1; i < segments; i++) {
+                    const bx = x1 + dx * i + (Math.random() - 0.5) * dx * 2.5;
+                    const by = y1 + dy * i + (Math.random() - 0.5) * dy * 1.8;
+                    points.push({ x: bx, y: by });
+                }
+                points.push({ x: x2, y: y2 });
+                return points;
+            }
+
+            function drawSnow(ctx, w, h, t, data) {
+                // 冷色天空
+                const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+                skyGrad.addColorStop(0, 'rgba(30,35,50,0.45)');
+                skyGrad.addColorStop(0.5, 'rgba(35,38,52,0.3)');
+                skyGrad.addColorStop(1, 'rgba(40,42,55,0.4)');
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                // 积雪地面
+                const snowGroundY = h * 0.84;
+                const accumHeight = data.snowAccumulation;
+                // 积雪主体
+                const snowGrad = ctx.createLinearGradient(0, snowGroundY - accumHeight, 0, snowGroundY + 5);
+                snowGrad.addColorStop(0, 'rgba(220,225,238,0.85)');
+                snowGrad.addColorStop(0.4, 'rgba(235,238,245,0.9)');
+                snowGrad.addColorStop(0.7, 'rgba(200,210,230,0.8)');
+                snowGrad.addColorStop(1, 'rgba(180,190,210,0.5)');
+                ctx.fillStyle = snowGrad;
+                ctx.beginPath();
+                ctx.moveTo(0, snowGroundY);
+                // 起伏的雪面
+                for (let x = 0; x <= w; x += w / 20) {
+                    const waveY = snowGroundY - accumHeight + Math.sin(x * 0.04 + t * 0.3) * 6 + Math.sin(x * 0.09 + t * 0.5) *
+                        3;
+                    ctx.lineTo(x, waveY);
+                }
+                ctx.lineTo(w, snowGroundY + 20);
+                ctx.lineTo(0, snowGroundY + 20);
+                ctx.closePath();
+                ctx.fill();
+
+                // 雪花
+                const snowCount = 70;
+                while (data.particles.length < snowCount) {
+                    data.particles.push({
+                        x: Math.random() * w,
+                        y: Math.random() * h,
+                        radius: 1.2 + Math.random() * 3.5,
+                        speed: 0.4 + Math.random() * 1.6,
+                        drift: (Math.random() - 0.5) * 1.2,
+                        driftFreq: 0.02 + Math.random() * 0.04,
+                        alpha: 0.55 + Math.random() * 0.45,
+                        wobbleAmp: 0.3 + Math.random() * 0.8,
+                    });
+                }
+                if (data.particles.length > snowCount) data.particles.length = snowCount;
+
+                data.particles.forEach(p => {
+                    p.y += p.speed;
+                    p.x += Math.sin(t * p.driftFreq * 60 + p.y * 0.1) * p.wobbleAmp + p.drift * 0.3;
+                    if (p.y > snowGroundY - data.snowAccumulation * 0.5) {
+                        p.y = -8;
+                        p.x = Math.random() * w;
+                    }
+                    if (p.x > w + 10) p.x = -10;
+                    if (p.x < -10) p.x = w + 10;
+
+                    const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+                    grad.addColorStop(0, `rgba(255,255,255,${p.alpha})`);
+                    grad.addColorStop(0.6, `rgba(240,242,250,${p.alpha * 0.6})`);
+                    grad.addColorStop(1, `rgba(220,225,240,0)`);
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // 积雪缓慢增加
+                if (data.particles.some(p => p.y > snowGroundY - data.snowAccumulation * 0.6) && Math.random() < 0.3) {
+                    data.snowAccumulation = Math.min(40, data.snowAccumulation + 0.015);
+                }
+                // 偶尔微微融化
+                if (Math.random() < 0.08 && data.snowAccumulation > 16) {
+                    data.snowAccumulation -= 0.008;
+                }
+            }
+
+            // ============ 主动画循环 ============
+            function animate(timestamp) {
+                globalTime = timestamp * 0.001;
+                const t = globalTime;
+
+                Object.entries(cardDataMap).forEach(([weatherId, data]) => {
+                    const ctx = data.canvas.getContext('2d');
+                    const w = data._w || data.canvas.width / (data._dpr || 1);
+                    const h = data._h || data.canvas.height / (data._dpr || 1);
+                    const dpr = data._dpr || 1;
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    ctx.scale(dpr, dpr);
+                    ctx.clearRect(0, 0, w, h);
+
+                    switch (weatherId) {
+                        case 'sunny':
+                            drawSunny(ctx, w, h, t, data);
+                            break;
+                        case 'windy':
+                            drawWindy(ctx, w, h, t, data);
+                            break;
+                        case 'rain':
+                            drawRain(ctx, w, h, t, data);
+                            break;
+                        case 'snow':
+                            drawSnow(ctx, w, h, t, data);
+                            break;
+                    }
+                });
+
+                animationId = requestAnimationFrame(animate);
+            }
+
+            // ============ 按钮交互 ============
+            function setActiveWeather(weatherId) {
+                if (activeWeatherId === weatherId) return;
+                activeWeatherId = weatherId;
+
+                // 更新卡片状态
+                Object.entries(cardDataMap).forEach(([wid, data]) => {
+                    if (wid === weatherId) {
+                        data.card.classList.add('active');
+                    } else {
+                        data.card.classList.remove('active');
+                    }
+                });
+
+                // 更新按钮状态
+                const buttons = buttonsRow.querySelectorAll('.btn-weather');
+                buttons.forEach(btn => {
+                    btn.classList.remove('btn-active');
+                    if (btn.dataset.weather === weatherId) {
+                        btn.classList.add('btn-active');
+                    }
+                });
+
+                // 触发一个小震动反馈动画
+                const activeCard = cardDataMap[weatherId].card;
+                activeCard.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                activeCard.style.transform = 'translateY(-8px) scale(1.04)';
+                setTimeout(() => {
+                    activeCard.style.transform = 'translateY(-6px) scale(1.025)';
+                    setTimeout(() => {
+                        activeCard.style.transition = 'all 0.45s cubic-bezier(0.25, 0.1, 0.25, 1)';
+                    }, 350);
+                }, 180);
+            }
+
+            buttonsRow.addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-weather');
+                if (!btn) return;
+                const weatherId = btn.dataset.weather;
+                if (weatherId) setActiveWeather(weatherId);
+            });
+
+            // 卡片点击也可以切换
+            cardsRow.addEventListener('click', (e) => {
+                const card = e.target.closest('.weather-card');
+                if (!card) return;
+                const weatherId = card.dataset.weather;
+                if (weatherId) setActiveWeather(weatherId);
+            });
+
+            // ============ 键盘导航 ============
+            document.addEventListener('keydown', (e) => {
+                const weatherIds = weatherConfigs.map(c => c.id);
+                const currentIndex = weatherIds.indexOf(activeWeatherId);
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const nextIndex = (currentIndex + 1) % weatherIds.length;
+                    setActiveWeather(weatherIds[nextIndex]);
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prevIndex = (currentIndex - 1 + weatherIds.length) % weatherIds.length;
+                    setActiveWeather(weatherIds[prevIndex]);
+                } else if (e.key >= '1' && e.key <= '4') {
+                    e.preventDefault();
+                    const idx = parseInt(e.key) - 1;
+                    setActiveWeather(weatherIds[idx]);
+                }
+            });
+
+            // ============ 初始化 ============
+            function init() {
+                resizeAllCanvases();
+                // 初始active
+                setActiveWeather('sunny');
+                // 强制初始状态
+                Object.entries(cardDataMap).forEach(([wid, data]) => {
+                    if (wid === 'sunny') data.card.classList.add('active');
+                    else data.card.classList.remove('active');
+                });
+                animationId = requestAnimationFrame(animate);
+            }
+
+            // 窗口大小变化时重新调整Canvas
+            let resizeDebounce;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeDebounce);
+                resizeDebounce = setTimeout(() => {
+                    resizeAllCanvases();
+                }, 200);
+            });
+
+            // 初始延迟以确保DOM渲染完成
+            setTimeout(init, 100);
+
+            console.log('🌤️ iOS 18 天气卡片已就绪');
+            console.log('   🖱️ 点击卡片或按钮切换天气');
+            console.log('   ⌨️ 使用方向键或数字键1-4切换');
+            console.log('   ✨ 晴天 · 💨 大风 · ⛈️ 暴雨 · ❄️ 暴雪');
+        })();
+    </script>
+</body>
+</html>

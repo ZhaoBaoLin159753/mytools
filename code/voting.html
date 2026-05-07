@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Card Ranking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --accent-color: #a78bfa;
+            --bg-dark: #0f0f23;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --bg-card-hover: rgba(255, 255, 255, 0.08);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .vote-card {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .vote-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .vote-card.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+
+        .rank-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .vote-card.has-rank .rank-badge {
+            opacity: 1;
+        }
+
+        .iframe-wrapper {
+            width: 100%;
+            height: 450px;
+            overflow: hidden;
+            border: none;
+        }
+
+        .iframe-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .card-footer {
+            padding: 16px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .vote-card.show-name .file-name {
+            opacity: 1;
+        }
+
+        .placeholder-name {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-color);
+        }
+
+        .ranking-info {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .ranking-info strong {
+            color: var(--primary-color);
+        }
+
+        .ranking-result {
+            display: none;
+            margin-top: 40px;
+            padding: 30px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .ranking-result.show {
+            display: block;
+        }
+
+        .ranking-result h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .result-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .result-rank {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .result-rank.gold {
+            background: linear-gradient(135deg, #ffd700, #ffb700);
+            color: #1a1a2e;
+        }
+
+        .result-rank.silver {
+            background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
+            color: #1a1a2e;
+        }
+
+        .result-rank.bronze {
+            background: linear-gradient(135deg, #cd7f32, #b87333);
+            color: white;
+        }
+
+        .result-rank.other {
+            background: var(--bg-card-hover);
+            color: var(--text-secondary);
+        }
+
+        .result-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .result-arrow {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            position: relative;
+            width: 95%;
+            max-width: 1600px;
+            max-height: 95vh;
+            background: var(--bg-dark);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-primary);
+        }
+
+        .modal-content {
+            width: 100%;
+            height: calc(90vh - 80px);
+            border: none;
+        }
+
+        .preview-btn {
+            position: absolute;
+            bottom: 80px;
+            right: 15px;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vote-card:hover .preview-btn {
+            opacity: 1;
+        }
+
+        .preview-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 1400px) {
+            .cards-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .cards-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .iframe-wrapper {
+                height: 400px;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+
+            .iframe-wrapper {
+                height: 350px;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Weather Card Design Voting</h1>
+            <p>请根据您的喜好对以下天气卡片设计进行排名（点击选择，1为最喜欢）</p>
+        </header>
+
+        <div class="ranking-info">
+            <span>已选择: <strong id="selected-count">0</strong> / 5</span>
+            <span style="margin: 0 10px;">|</span>
+            <span>排名进度: <strong id="rank-progress">0%</strong></span>
+        </div>
+
+        <div class="cards-container" id="cards-container">
+            <!-- Cards will be generated dynamically -->
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-secondary" onclick="resetRanking()">🔄 重置排名</button>
+            <button class="btn btn-primary" id="submit-btn" onclick="submitRanking()" disabled>✅ 提交排名</button>
+        </div>
+
+        <div class="ranking-result" id="ranking-result">
+            <h2>🎉 排名完成!</h2>
+            <div class="result-list" id="result-list"></div>
+            <div class="controls" style="margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="resetRanking()">🔄 重新排名</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for full preview -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span class="modal-title" id="modal-title">Preview</span>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <iframe class="modal-content" id="modal-content"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const weatherFiles = [
+            { name: 'Claude.html', label: 'Design A' },
+            { name: 'GLM5.1.html', label: 'Design B' },
+            { name: 'GPT.html', label: 'Design C' },
+            { name: 'deepseek.html', label: 'Design D' },
+            { name: 'xiaomi.html', label: 'Design E' }
+        ];
+
+        let rankings = {};
+        let currentRank = 1;
+        let submitted = false;
+
+        function init() {
+            const container = document.getElementById('cards-container');
+            
+            weatherFiles.forEach((file, index) => {
+                const card = document.createElement('div');
+                card.className = 'vote-card';
+                card.dataset.index = index;
+                card.dataset.name = file.name;
+                
+                card.innerHTML = `
+                    <div class="rank-badge" id="rank-${index}">${currentRank}</div>
+                    <div class="iframe-wrapper">
+                        <iframe src="${file.name}" title="${file.label}"></iframe>
+                    </div>
+                    <button class="preview-btn" id="preview-${index}" onclick="event.stopPropagation(); openModal(${index})">
+                        🔍 预览完整内容
+                    </button>
+                    <div class="card-footer">
+                        <div class="file-name" id="name-${index}">${file.name.replace('.html', '')}</div>
+                        <div class="placeholder-name" id="placeholder-${index}">${file.label} (点击排名)</div>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => handleCardClick(index));
+                container.appendChild(card);
+            });
+        }
+
+        function handleCardClick(index) {
+            if (submitted) return;
+            
+            const card = document.querySelector(`[data-index="${index}"]`);
+            const rank = rankings[index];
+            
+            if (rank) {
+                // Remove existing rank
+                delete rankings[index];
+                card.classList.remove('selected', 'has-rank');
+                updateCurrentRank();
+            } else {
+                // Assign new rank
+                rankings[index] = currentRank;
+                card.classList.add('selected', 'has-rank');
+                document.getElementById(`rank-${index}`).textContent = currentRank;
+                currentRank++;
+            }
+            
+            updateUI();
+        }
+
+        function updateCurrentRank() {
+            const usedRanks = Object.values(rankings);
+            currentRank = 1;
+            while (usedRanks.includes(currentRank)) {
+                currentRank++;
+            }
+        }
+
+        function updateUI() {
+            const selectedCount = Object.keys(rankings).length;
+            const progress = Math.round((selectedCount / weatherFiles.length) * 100);
+            
+            document.getElementById('selected-count').textContent = selectedCount;
+            document.getElementById('rank-progress').textContent = `${progress}%`;
+            document.getElementById('submit-btn').disabled = selectedCount < weatherFiles.length;
+        }
+
+        function submitRanking() {
+            if (Object.keys(rankings).length < weatherFiles.length) return;
+            
+            submitted = true;
+            
+            // Show file names on all cards
+            weatherFiles.forEach((file, index) => {
+                const card = document.querySelector(`[data-index="${index}"]`);
+                card.classList.add('show-name');
+            });
+            
+            // Hide placeholder names
+            document.querySelectorAll('.placeholder-name').forEach(el => el.style.display = 'none');
+            
+            // Show ranking result
+            displayResult();
+        }
+
+        function displayResult() {
+            const resultList = document.getElementById('result-list');
+            resultList.innerHTML = '';
+            
+            // Sort by rank
+            const sortedResults = Object.entries(rankings)
+                .map(([index, rank]) => ({
+                    index: parseInt(index),
+                    rank,
+                    name: weatherFiles[parseInt(index)].name.replace('.html', '')
+                }))
+                .sort((a, b) => a.rank - b.rank);
+            
+            sortedResults.forEach((item, position) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                let rankClass = 'other';
+                if (position === 0) rankClass = 'gold';
+                else if (position === 1) rankClass = 'silver';
+                else if (position === 2) rankClass = 'bronze';
+                
+                resultItem.innerHTML = `
+                    <div class="result-rank ${rankClass}">${position + 1}</div>
+                    <span class="result-name">${item.name}</span>
+                    <span class="result-arrow">→</span>
+                    <span style="color: var(--text-muted);">Rank ${item.rank}</span>
+                `;
+                
+                resultList.appendChild(resultItem);
+            });
+            
+            document.getElementById('ranking-result').classList.add('show');
+        }
+
+        function resetRanking() {
+            rankings = {};
+            currentRank = 1;
+            submitted = false;
+            
+            // Reset all cards
+            document.querySelectorAll('.vote-card').forEach((card, index) => {
+                card.classList.remove('selected', 'has-rank', 'show-name');
+                document.getElementById(`rank-${index}`).textContent = '';
+            });
+            
+            // Show placeholder names again
+            document.querySelectorAll('.placeholder-name').forEach(el => el.style.display = 'block');
+            
+            // Hide result
+            document.getElementById('ranking-result').classList.remove('show');
+            
+            updateUI();
+        }
+
+        // Modal functions
+        function openModal(index) {
+            const file = weatherFiles[index];
+            document.getElementById('modal-title').textContent = `${file.label} - Full Preview`;
+            document.getElementById('modal-content').src = file.name;
+            document.getElementById('modal-overlay').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

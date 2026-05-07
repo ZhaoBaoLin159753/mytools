@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather — iOS 18</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blur: blur(40px);
+    --radius: 28px;
+    --card-w: 320px;
+    --card-h: 520px;
+    --glass: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.15);
+    --text: #fff;
+    --sub: rgba(255,255,255,0.6);
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    font-family: 'Nunito', sans-serif;
+    background: #060a12;
+  }
+
+  /* ── BACKGROUND ── */
+  .bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 20% 30%, #0d1a40 0%, transparent 60%),
+                radial-gradient(ellipse 70% 70% at 80% 70%, #0a1525 0%, transparent 60%),
+                #060a12;
+  }
+  .bg::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+
+  /* ── LAYOUT ── */
+  .stage {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 100%; height: 100%;
+    gap: 28px;
+    padding: 20px;
+  }
+
+  .title-bar {
+    display: flex; align-items: center; gap: 12px;
+    animation: fadeUp .8s ease both;
+  }
+  .title-bar h1 {
+    font-size: 18px; font-weight: 600;
+    letter-spacing: 0.08em; color: var(--text);
+    text-transform: uppercase;
+  }
+  .title-bar span {
+    font-size: 12px; color: var(--sub);
+    font-weight: 400; letter-spacing: 0.12em;
+  }
+
+  .cards-row {
+    display: flex; gap: 16px;
+    align-items: center;
+  }
+
+  /* ── CARD BASE ── */
+  .card {
+    position: relative;
+    width: var(--card-w);
+    height: var(--card-h);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .4s cubic-bezier(.34,1.56,.64,1), box-shadow .4s ease;
+    animation: fadeUp .7s ease both;
+  }
+  .card:nth-child(1) { animation-delay: .1s; }
+  .card:nth-child(2) { animation-delay: .2s; }
+  .card:nth-child(3) { animation-delay: .3s; }
+  .card:nth-child(4) { animation-delay: .4s; }
+
+  .card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 32px 80px rgba(0,0,0,.6);
+  }
+  .card.active {
+    transform: translateY(-12px) scale(1.04);
+    box-shadow: 0 40px 100px rgba(0,0,0,.7);
+  }
+
+  /* card gradient backgrounds */
+  .card-bg {
+    position: absolute; inset: 0;
+    transition: opacity .6s ease;
+  }
+
+  /* SUNNY */
+  .card-sunny .card-bg {
+    background: radial-gradient(ellipse 80% 60% at 50% 30%, #1a3a6b 0%, #0d2145 40%, #06111f 100%);
+  }
+
+  /* WINDY */
+  .card-windy .card-bg {
+    background: radial-gradient(ellipse 80% 60% at 50% 20%, #1e2d4a 0%, #0e1c35 40%, #070e1c 100%);
+  }
+
+  /* RAIN */
+  .card-rain .card-bg {
+    background: radial-gradient(ellipse 80% 70% at 50% 20%, #0d1e2e 0%, #080f1a 50%, #040810 100%);
+  }
+
+  /* SNOW */
+  .card-snow .card-bg {
+    background: radial-gradient(ellipse 80% 60% at 50% 30%, #1a2a4a 0%, #0d1a30 40%, #060e1e 100%);
+  }
+
+  /* glass overlay */
+  .card-glass {
+    position: absolute; inset: 0;
+    background: var(--glass);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+  }
+
+  /* card content */
+  .card-content {
+    position: absolute; inset: 0;
+    padding: 28px 24px 24px;
+    display: flex; flex-direction: column;
+    z-index: 10;
+  }
+
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+
+  .location {
+    font-size: 13px; font-weight: 600;
+    color: var(--sub); letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .time {
+    font-size: 12px; color: var(--sub);
+    font-weight: 500;
+  }
+
+  .temp-display {
+    margin-top: auto;
+    margin-bottom: 4px;
+  }
+  .temp-num {
+    font-size: 80px; font-weight: 200;
+    color: #fff; line-height: 1;
+    letter-spacing: -4px;
+  }
+  .temp-unit {
+    font-size: 32px; font-weight: 300;
+    color: rgba(255,255,255,.7);
+    vertical-align: super; margin-left: 2px;
+  }
+  .weather-label {
+    font-size: 15px; font-weight: 500;
+    color: rgba(255,255,255,.8);
+    margin-top: 4px; letter-spacing: 0.02em;
+  }
+
+  .card-footer {
+    display: flex; justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+  .stat { text-align: center; }
+  .stat-val { font-size: 15px; font-weight: 600; color: #fff; }
+  .stat-key { font-size: 10px; color: var(--sub); margin-top: 2px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* ── SCENE CONTAINER ── */
+  .scene {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    z-index: 2;
+  }
+
+  /* ─────────────────────────────────────────
+     SUNNY SCENE
+  ───────────────────────────────────────── */
+  .sun-core {
+    position: absolute;
+    width: 100px; height: 100px;
+    top: 60px; left: 50%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffe97a 0%, #ffcc00 50%, #ff9500 100%);
+    box-shadow: 0 0 40px 20px rgba(255,200,0,.35), 0 0 80px 40px rgba(255,150,0,.15);
+    animation: sunPulse 3s ease-in-out infinite;
+  }
+  @keyframes sunPulse {
+    0%,100% { box-shadow: 0 0 40px 20px rgba(255,200,0,.35), 0 0 80px 40px rgba(255,150,0,.15); transform: translateX(-50%) scale(1); }
+    50% { box-shadow: 0 0 60px 30px rgba(255,210,0,.45), 0 0 120px 60px rgba(255,160,0,.2); transform: translateX(-50%) scale(1.05); }
+  }
+
+  .sun-ray {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 2px;
+    height: 60px;
+    background: linear-gradient(to bottom, rgba(255,210,80,.8), transparent);
+    transform-origin: top center;
+    border-radius: 2px;
+    animation: rayRotate 8s linear infinite;
+  }
+  @keyframes rayRotate { to { transform: rotate(360deg); } }
+
+  .sun-halo {
+    position: absolute;
+    border-radius: 50%;
+    background: transparent;
+    top: 60px; left: 50%;
+    transform: translateX(-50%);
+    animation: haloExpand 3s ease-in-out infinite;
+  }
+  .halo-1 { width: 140px; height: 140px; margin: -20px 0 0 -20px; border: 1px solid rgba(255,200,0,.15); animation-delay: 0s; }
+  .halo-2 { width: 180px; height: 180px; margin: -40px 0 0 -40px; border: 1px solid rgba(255,200,0,.08); animation-delay: .5s; }
+  .halo-3 { width: 230px; height: 230px; margin: -65px 0 0 -65px; border: 1px solid rgba(255,200,0,.04); animation-delay: 1s; }
+  @keyframes haloExpand {
+    0%,100% { opacity: .6; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+  }
+
+  .lens-flare {
+    position: absolute;
+    width: 200px; height: 4px;
+    top: 108px; left: 50%;
+    transform: translateX(-50%) rotate(-20deg);
+    background: linear-gradient(to right, transparent, rgba(255,230,100,.3), transparent);
+    animation: flareShimmer 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes flareShimmer {
+    0%,100% { opacity: 0; } 50% { opacity: 1; }
+  }
+
+  .sun-glow-floor {
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 140px;
+    background: linear-gradient(to top, rgba(255,170,0,.08), transparent);
+    pointer-events: none;
+  }
+
+  /* ─────────────────────────────────────────
+     WINDY SCENE
+  ───────────────────────────────────────── */
+  .wind-cloud {
+    position: absolute;
+    border-radius: 50px;
+    background: rgba(180,200,230,0.15);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .wc1 { width: 160px; height: 50px; top: 70px; left: -20px; animation: cloudDrift1 6s ease-in-out infinite; }
+  .wc2 { width: 120px; height: 38px; top: 110px; left: 60px; animation: cloudDrift2 8s ease-in-out infinite; }
+  .wc3 { width: 90px; height: 30px; top: 90px; right: 10px; animation: cloudDrift3 7s ease-in-out infinite; }
+  @keyframes cloudDrift1 { 0%,100%{transform:translateX(0) translateY(0)} 33%{transform:translateX(20px) translateY(-5px)} 66%{transform:translateX(-10px) translateY(5px)} }
+  @keyframes cloudDrift2 { 0%,100%{transform:translateX(0) translateY(0)} 50%{transform:translateX(30px) translateY(-8px)} }
+  @keyframes cloudDrift3 { 0%,100%{transform:translateX(0) translateY(0)} 40%{transform:translateX(-25px) translateY(4px)} 80%{transform:translateX(10px) translateY(-3px)} }
+
+  .wind-line {
+    position: absolute;
+    height: 1.5px;
+    border-radius: 2px;
+    background: linear-gradient(to right, transparent, rgba(180,210,255,.35), transparent);
+    animation: windBlow linear infinite;
+  }
+  @keyframes windBlow { 0%{transform:translateX(-100%);opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{transform:translateX(100%);opacity:0} }
+
+  .tree {
+    position: absolute;
+    bottom: 60px;
+    transform-origin: bottom center;
+  }
+  .tree svg { display: block; }
+  .tree-1 { left: 40px; animation: treeSway 2.5s ease-in-out infinite; }
+  .tree-2 { left: 80px; animation: treeSway 2.8s ease-in-out infinite .3s; }
+  .tree-3 { right: 50px; animation: treeSway 2.2s ease-in-out infinite .6s; }
+  @keyframes treeSway {
+    0%,100%{transform:rotate(0deg)} 25%{transform:rotate(8deg)} 75%{transform:rotate(-5deg)}
+  }
+
+  /* ─────────────────────────────────────────
+     RAIN SCENE
+  ───────────────────────────────────────── */
+  .rain-cloud {
+    position: absolute;
+    top: 40px; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 70px;
+    background: radial-gradient(ellipse at 30% 50%, rgba(80,100,130,.7), rgba(40,55,80,.5));
+    border-radius: 40px 40px 30px 30px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.3);
+    animation: cloudBob 4s ease-in-out infinite;
+  }
+  .rain-cloud::before {
+    content: '';
+    position: absolute;
+    top: -24px; left: 30px;
+    width: 80px; height: 60px;
+    background: radial-gradient(ellipse, rgba(70,90,120,.65), rgba(40,55,80,.4));
+    border-radius: 50%;
+  }
+  .rain-cloud::after {
+    content: '';
+    position: absolute;
+    top: -16px; left: 80px;
+    width: 60px; height: 50px;
+    background: radial-gradient(ellipse, rgba(70,90,120,.6), rgba(40,55,80,.4));
+    border-radius: 50%;
+  }
+  @keyframes cloudBob { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+
+  .raindrop {
+    position: absolute;
+    top: -20px;
+    width: 1.5px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom, rgba(150,190,255,.7), rgba(100,160,255,.3));
+    animation: rainFall linear infinite;
+  }
+  @keyframes rainFall { 0%{transform:translateY(-30px) scaleY(1);opacity:0} 10%{opacity:1} 90%{opacity:.8} 100%{transform:translateY(620px) scaleY(1.5);opacity:0} }
+
+  .puddle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(100,160,255,.12);
+    border: 1px solid rgba(150,200,255,.15);
+    animation: puddleGrow 3s ease-out infinite;
+  }
+  @keyframes puddleGrow { 0%{transform:scale(0);opacity:.8} 100%{transform:scale(1);opacity:0} }
+
+  .lightning {
+    position: absolute;
+    top: 100px; left: 50%;
+    width: 3px; height: 120px;
+    background: linear-gradient(to bottom, rgba(200,220,255,.9), rgba(150,180,255,.5));
+    clip-path: polygon(40% 0, 100% 0, 60% 45%, 100% 45%, 0% 100%, 30% 55%, 0 55%);
+    transform: translateX(-50%);
+    animation: lightningFlash 5s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(180,210,255,.8));
+  }
+  @keyframes lightningFlash {
+    0%,85%,90%,95%,100%{opacity:0}
+    87%,93%{opacity:1}
+  }
+  .lightning-glow {
+    position: absolute; inset: 0;
+    background: rgba(150,200,255,.04);
+    animation: lightningGlow 5s ease-in-out infinite;
+    border-radius: var(--radius);
+  }
+  @keyframes lightningGlow {
+    0%,85%,90%,95%,100%{opacity:0}
+    87%,93%{opacity:1}
+  }
+
+  /* ─────────────────────────────────────────
+     SNOW SCENE
+  ───────────────────────────────────────── */
+  .snowflake {
+    position: absolute;
+    top: -20px;
+    border-radius: 50%;
+    background: rgba(230,240,255,.85);
+    animation: snowFall linear infinite;
+    filter: blur(0.3px);
+  }
+  @keyframes snowFall {
+    0%{transform:translateY(-20px) translateX(0) rotate(0deg);opacity:0}
+    5%{opacity:1}
+    95%{opacity:.9}
+    100%{transform:translateY(620px) translateX(var(--drift,30px)) rotate(360deg);opacity:0}
+  }
+
+  .snow-pile {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(to top, rgba(200,220,255,.25) 0%, rgba(200,220,255,.12) 60%, transparent 100%);
+    border-radius: 50% 50% 0 0 / 30px 30px 0 0;
+  }
+  .snow-pile-2 {
+    position: absolute;
+    bottom: 0; left: 20px; right: 30px;
+    height: 40px;
+    background: linear-gradient(to top, rgba(210,230,255,.2) 0%, transparent 100%);
+    border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+  }
+
+  .snow-cloud {
+    position: absolute;
+    top: 50px; left: 50%;
+    transform: translateX(-50%);
+    width: 190px; height: 65px;
+    background: radial-gradient(ellipse at 40% 50%, rgba(160,180,220,.35), rgba(120,140,180,.2));
+    border-radius: 40px;
+    animation: cloudBob 5s ease-in-out infinite;
+  }
+  .snow-cloud::before {
+    content: '';
+    position: absolute;
+    top: -20px; left: 25px;
+    width: 75px; height: 55px;
+    background: radial-gradient(ellipse, rgba(155,175,215,.3), rgba(120,140,180,.15));
+    border-radius: 50%;
+  }
+
+  /* ── BOTTOM CONTROLS ── */
+  .controls {
+    display: flex; gap: 12px;
+    animation: fadeUp .9s ease .5s both;
+  }
+  .ctrl-btn {
+    padding: 10px 22px;
+    border-radius: 50px;
+    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.07);
+    color: rgba(255,255,255,.7);
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer;
+    backdrop-filter: blur(20px);
+    transition: all .3s ease;
+  }
+  .ctrl-btn:hover {
+    background: rgba(255,255,255,.14);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  }
+  .ctrl-btn.active {
+    background: rgba(255,255,255,.2);
+    color: #fff;
+    border-color: rgba(255,255,255,.3);
+    box-shadow: 0 4px 20px rgba(255,255,255,.1);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* active highlight ring */
+  .card.active::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: var(--radius);
+    border: 1.5px solid rgba(255,255,255,.25);
+    pointer-events: none;
+    z-index: 20;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+
+<div class="stage">
+
+  <div class="title-bar">
+    <h1>Weather</h1>
+    <span>iOS 18 · Live Conditions</span>
+  </div>
+
+  <div class="cards-row">
+
+    <!-- ───── SUNNY ───── -->
+    <div class="card card-sunny" id="card-sunny" onclick="activateCard('sunny')">
+      <div class="card-bg"></div>
+      <div class="scene" id="scene-sunny">
+        <!-- halos -->
+        <div class="sun-halo halo-1"></div>
+        <div class="sun-halo halo-2"></div>
+        <div class="sun-halo halo-3"></div>
+        <!-- rays -->
+        <div class="sun-rays" id="sun-rays"></div>
+        <!-- core -->
+        <div class="sun-core"></div>
+        <div class="lens-flare"></div>
+        <div class="sun-glow-floor"></div>
+      </div>
+      <div class="card-glass"></div>
+      <div class="card-content">
+        <div class="card-header">
+          <div class="location">上海</div>
+          <div class="time">14:30</div>
+        </div>
+        <div class="temp-display">
+          <div class="temp-num">28<span class="temp-unit">°</span></div>
+          <div class="weather-label">☀️ 晴天，阳光明媚</div>
+        </div>
+        <div class="card-footer">
+          <div class="stat"><div class="stat-val">92%</div><div class="stat-key">UV指数</div></div>
+          <div class="stat"><div class="stat-val">45%</div><div class="stat-key">湿度</div></div>
+          <div class="stat"><div class="stat-val">5km/h</div><div class="stat-key">风速</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───── WINDY ───── -->
+    <div class="card card-windy" id="card-windy" onclick="activateCard('windy')">
+      <div class="card-bg"></div>
+      <div class="scene" id="scene-windy">
+        <div class="wind-cloud wc1"></div>
+        <div class="wind-cloud wc2"></div>
+        <div class="wind-cloud wc3"></div>
+        <!-- wind lines injected by JS -->
+        <div id="wind-lines"></div>
+        <!-- trees -->
+        <div class="tree tree-1">
+          <svg width="32" height="80" viewBox="0 0 32 80">
+            <rect x="13" y="50" width="6" height="30" rx="2" fill="rgba(100,80,60,.6)"/>
+            <ellipse cx="16" cy="40" rx="14" ry="22" fill="rgba(60,120,70,.5)"/>
+            <ellipse cx="16" cy="28" rx="11" ry="17" fill="rgba(70,140,80,.55)"/>
+            <ellipse cx="16" cy="18" rx="8" ry="13" fill="rgba(80,160,90,.6)"/>
+          </svg>
+        </div>
+        <div class="tree tree-2">
+          <svg width="26" height="65" viewBox="0 0 26 65">
+            <rect x="10" y="42" width="5" height="23" rx="2" fill="rgba(100,80,60,.6)"/>
+            <ellipse cx="13" cy="33" rx="11" ry="18" fill="rgba(60,120,70,.5)"/>
+            <ellipse cx="13" cy="22" rx="9" ry="14" fill="rgba(70,140,80,.55)"/>
+            <ellipse cx="13" cy="13" rx="7" ry="10" fill="rgba(80,160,90,.6)"/>
+          </svg>
+        </div>
+        <div class="tree tree-3">
+          <svg width="28" height="72" viewBox="0 0 28 72">
+            <rect x="11" y="46" width="5" height="26" rx="2" fill="rgba(100,80,60,.6)"/>
+            <ellipse cx="14" cy="36" rx="12" ry="20" fill="rgba(60,120,70,.5)"/>
+            <ellipse cx="14" cy="24" rx="10" ry="15" fill="rgba(70,140,80,.55)"/>
+            <ellipse cx="14" cy="14" rx="7" ry="11" fill="rgba(80,160,90,.6)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-glass"></div>
+      <div class="card-content">
+        <div class="card-header">
+          <div class="location">青岛</div>
+          <div class="time">11:15</div>
+        </div>
+        <div class="temp-display">
+          <div class="temp-num">18<span class="temp-unit">°</span></div>
+          <div class="weather-label">💨 大风，阵风强烈</div>
+        </div>
+        <div class="card-footer">
+          <div class="stat"><div class="stat-val">7级</div><div class="stat-key">风力</div></div>
+          <div class="stat"><div class="stat-val">65%</div><div class="stat-key">湿度</div></div>
+          <div class="stat"><div class="stat-val">58km/h</div><div class="stat-key">风速</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───── RAIN ───── -->
+    <div class="card card-rain" id="card-rain" onclick="activateCard('rain')">
+      <div class="card-bg"></div>
+      <div class="scene" id="scene-rain">
+        <div class="lightning-glow"></div>
+        <div class="rain-cloud"></div>
+        <!-- raindrops injected by JS -->
+        <div id="raindrops"></div>
+        <!-- puddles -->
+        <div id="puddles"></div>
+        <div class="lightning"></div>
+      </div>
+      <div class="card-glass"></div>
+      <div class="card-content">
+        <div class="card-header">
+          <div class="location">广州</div>
+          <div class="time">08:45</div>
+        </div>
+        <div class="temp-display">
+          <div class="temp-num">22<span class="temp-unit">°</span></div>
+          <div class="weather-label">⛈️ 暴雨，雷电交加</div>
+        </div>
+        <div class="card-footer">
+          <div class="stat"><div class="stat-val">暴雨</div><div class="stat-key">等级</div></div>
+          <div class="stat"><div class="stat-val">92%</div><div class="stat-key">湿度</div></div>
+          <div class="stat"><div class="stat-val">15km/h</div><div class="stat-key">风速</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───── SNOW ───── -->
+    <div class="card card-snow" id="card-snow" onclick="activateCard('snow')">
+      <div class="card-bg"></div>
+      <div class="scene" id="scene-snow">
+        <div class="snow-cloud"></div>
+        <!-- snowflakes injected by JS -->
+        <div id="snowflakes"></div>
+        <div class="snow-pile"></div>
+        <div class="snow-pile-2"></div>
+      </div>
+      <div class="card-glass"></div>
+      <div class="card-content">
+        <div class="card-header">
+          <div class="location">哈尔滨</div>
+          <div class="time">09:00</div>
+        </div>
+        <div class="temp-display">
+          <div class="temp-num">-8<span class="temp-unit">°</span></div>
+          <div class="weather-label">❄️ 暴雪，能见度低</div>
+        </div>
+        <div class="card-footer">
+          <div class="stat"><div class="stat-val">暴雪</div><div class="stat-key">预警</div></div>
+          <div class="stat"><div class="stat-val">88%</div><div class="stat-key">湿度</div></div>
+          <div class="stat"><div class="stat-val">8km/h</div><div class="stat-key">风速</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /cards-row -->
+
+  <div class="controls">
+    <button class="ctrl-btn active" id="btn-sunny" onclick="activateCard('sunny')">☀️ 晴天</button>
+    <button class="ctrl-btn" id="btn-windy" onclick="activateCard('windy')">💨 大风</button>
+    <button class="ctrl-btn" id="btn-rain" onclick="activateCard('rain')">⛈️ 暴雨</button>
+    <button class="ctrl-btn" id="btn-snow" onclick="activateCard('snow')">❄️ 暴雪</button>
+  </div>
+
+</div><!-- /stage -->
+
+<script>
+/* ── SUN RAYS ── */
+(function() {
+  const container = document.getElementById('sun-rays');
+  const N = 12;
+  for (let i = 0; i < N; i++) {
+    const ray = document.createElement('div');
+    ray.className = 'sun-ray';
+    const angle = (360 / N) * i;
+    const len = 45 + Math.random() * 30;
+    ray.style.cssText = `
+      position:absolute;
+      top:108px; left:50%;
+      width:${1 + Math.random()}px;
+      height:${len}px;
+      transform-origin:top center;
+      transform:translateX(-50%) rotate(${angle}deg) translateY(2px);
+      background:linear-gradient(to bottom,rgba(255,210,80,${.5+Math.random()*.3}),transparent);
+      border-radius:2px;
+      animation:rayRotate ${6+i*.4}s linear infinite;
+    `;
+    container.appendChild(ray);
+  }
+})();
+
+/* ── WIND LINES ── */
+(function() {
+  const container = document.getElementById('wind-lines');
+  const defs = [
+    {top:160,w:180,dur:2.2,delay:0},
+    {top:200,w:140,dur:2.8,delay:.4},
+    {top:240,w:200,dur:2.0,delay:.8},
+    {top:280,w:120,dur:3.0,delay:1.2},
+    {top:320,w:160,dur:2.5,delay:.2},
+    {top:360,w:100,dur:2.7,delay:.9},
+    {top:400,w:190,dur:2.1,delay:1.5},
+  ];
+  defs.forEach(d => {
+    const l = document.createElement('div');
+    l.className = 'wind-line';
+    l.style.cssText = `top:${d.top}px;width:${d.w}px;left:0;animation:windBlow ${d.dur}s linear ${d.delay}s infinite;`;
+    container.appendChild(l);
+  });
+})();
+
+/* ── RAINDROPS ── */
+(function() {
+  const container = document.getElementById('raindrops');
+  for (let i = 0; i < 55; i++) {
+    const r = document.createElement('div');
+    r.className = 'raindrop';
+    const left = Math.random() * 320;
+    const dur = .5 + Math.random() * .6;
+    const delay = Math.random() * 2;
+    const h = 12 + Math.random() * 14;
+    r.style.cssText = `left:${left}px;height:${h}px;width:${1+Math.random()}px;animation-duration:${dur}s;animation-delay:${delay}s;`;
+    container.appendChild(r);
+  }
+})();
+
+/* ── PUDDLES ── */
+(function() {
+  const container = document.getElementById('puddles');
+  const spots = [
+    {left:40,bottom:30,w:60,h:20},
+    {left:120,bottom:20,w:80,h:25},
+    {left:220,bottom:35,w:50,h:18},
+    {left:170,bottom:15,w:70,h:22},
+    {left:80,bottom:10,w:90,h:28},
+  ];
+  spots.forEach((s,i) => {
+    const p = document.createElement('div');
+    p.className = 'puddle';
+    p.style.cssText = `left:${s.left}px;bottom:${s.bottom}px;width:${s.w}px;height:${s.h}px;animation-duration:${2+i*.4}s;animation-delay:${i*.6}s;`;
+    container.appendChild(p);
+  });
+})();
+
+/* ── SNOWFLAKES ── */
+(function() {
+  const container = document.getElementById('snowflakes');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'snowflake';
+    const left = Math.random() * 320;
+    const size = 2 + Math.random() * 5;
+    const dur = 3 + Math.random() * 4;
+    const delay = Math.random() * 4;
+    const drift = (Math.random() - .5) * 60;
+    s.style.cssText = `left:${left}px;width:${size}px;height:${size}px;--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s;opacity:${.5+Math.random()*.5};`;
+    container.appendChild(s);
+  }
+})();
+
+/* ── CARD ACTIVATION ── */
+function activateCard(type) {
+  const types = ['sunny','windy','rain','snow'];
+  types.forEach(t => {
+    document.getElementById('card-'+t).classList.toggle('active', t === type);
+    document.getElementById('btn-'+t).classList.toggle('active', t === type);
+  });
+}
+
+// init
+activateCard('sunny');
+</script>
+</body>
+</html>
