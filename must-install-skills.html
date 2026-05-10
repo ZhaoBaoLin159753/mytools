@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>必装 Claude Code Skills</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface2: #18181f;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.15);
+  --text: #f0efe8;
+  --muted: rgba(240,239,232,0.45);
+  --hint: rgba(240,239,232,0.22);
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Noto Sans SC', sans-serif;
+  --display: 'Syne', sans-serif;
+
+  --c1: #7B61FF;
+  --c2: #00D2A0;
+  --c3: #FF9A3C;
+  --c4: #4A9EFF;
+  --c5: #FF5E7A;
+
+  --c1-dim: rgba(123,97,255,0.12);
+  --c2-dim: rgba(0,210,160,0.12);
+  --c3-dim: rgba(255,154,60,0.12);
+  --c4-dim: rgba(74,158,255,0.12);
+  --c5-dim: rgba(255,94,122,0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── noise grain overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 999; opacity: 0.4;
+}
+
+/* ── grid lines bg ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none; z-index: 0;
+}
+
+/* ── glowing orbs ── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 20s ease-in-out infinite alternate;
+}
+.orb-1 { width: 600px; height: 600px; background: rgba(123,97,255,0.08); top: -200px; right: -100px; animation-delay: 0s; }
+.orb-2 { width: 400px; height: 400px; background: rgba(0,210,160,0.06); bottom: 10%; left: -100px; animation-delay: -7s; }
+.orb-3 { width: 350px; height: 350px; background: rgba(255,94,122,0.05); top: 50%; right: 10%; animation-delay: -14s; }
+
+@keyframes drift {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(30px, 40px) scale(1.05); }
+}
+
+/* ── layout ── */
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 2rem 6rem;
+}
+
+/* ── hero ── */
+.hero {
+  padding: 6rem 0 4rem;
+  text-align: center;
+  position: relative;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c2);
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 0.6s 0.1s forwards;
+}
+
+.hero h1 {
+  font-family: var(--display);
+  font-size: clamp(2.8rem, 7vw, 5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.25rem;
+  opacity: 0;
+  animation: fadeUp 0.6s 0.25s forwards;
+}
+
+.hero h1 .line2 {
+  display: block;
+  background: linear-gradient(135deg, var(--c1) 0%, var(--c4) 50%, var(--c2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: 1.05rem;
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 auto 2.5rem;
+  opacity: 0;
+  animation: fadeUp 0.6s 0.4s forwards;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeUp 0.6s 0.55s forwards;
+}
+.meta-item {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--hint);
+}
+.meta-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── divider ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 0 0 3.5rem;
+  opacity: 0;
+  animation: fadeIn 0.8s 0.7s forwards;
+}
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* ── skill cards ── */
+.skills { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.skill-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: cardIn 0.5s forwards;
+}
+.skill-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.skill-card:nth-child(1) { animation-delay: 0.8s;  --accent: var(--c1); --dim: var(--c1-dim); }
+.skill-card:nth-child(2) { animation-delay: 0.95s; --accent: var(--c2); --dim: var(--c2-dim); }
+.skill-card:nth-child(3) { animation-delay: 1.1s;  --accent: var(--c3); --dim: var(--c3-dim); }
+.skill-card:nth-child(4) { animation-delay: 1.25s; --accent: var(--c4); --dim: var(--c4-dim); }
+.skill-card:nth-child(5) { animation-delay: 1.4s;  --accent: var(--c5); --dim: var(--c5-dim); }
+
+@keyframes cardIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* accent strip */
+.skill-card::before {
+  content: '';
+  display: block;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+.card-inner {
+  padding: 1.75rem 2rem;
+}
+
+/* ── card header ── */
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.card-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  background: var(--dim);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.card-meta { flex: 1; }
+
+.card-title {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.card-by {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--hint);
+  margin-top: 3px;
+  letter-spacing: 0.03em;
+}
+
+.card-stars {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--dim);
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  margin-top: 4px;
+  display: inline-block;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* ── tags ── */
+.tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 1rem;
+}
+.tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  transition: border-color 0.2s, color 0.2s;
+}
+.skill-card:hover .tag {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--text);
+}
+
+/* ── desc ── */
+.card-desc {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+}
+
+/* ── features grid ── */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.feat {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  transition: background 0.2s, border-color 0.2s;
+}
+.skill-card:hover .feat {
+  background: color-mix(in srgb, var(--dim) 40%, var(--surface2));
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.feat-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+/* ── usage box ── */
+.usage-box {
+  background: #0d0d14;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.usage-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+
+.terminal-dots { display: flex; gap: 5px; }
+.terminal-dots span {
+  width: 9px; height: 9px; border-radius: 50%;
+}
+.dot-r { background: #FF5F57; }
+.dot-y { background: #FFBD2E; }
+.dot-g { background: #28C840; }
+
+.usage-label-txt {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--hint);
+  letter-spacing: 0.08em;
+  flex: 1;
+  text-align: center;
+}
+
+.usage-lines { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+
+.usage-row {
+  display: flex; align-items: flex-start; gap: 10px;
+}
+
+.usage-prompt {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.usage-content {
+  flex: 1;
+}
+
+.usage-cmd {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #a8d8a8;
+  display: block;
+}
+
+.usage-hint {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--hint);
+  margin-top: 2px;
+  display: block;
+  line-height: 1.5;
+}
+
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--hint);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+.copy-btn.copied { border-color: var(--c2); color: var(--c2); }
+
+/* ── card footer ── */
+.card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gh-link {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--hint);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 6px;
+  transition: color 0.2s;
+}
+.gh-link:hover { color: var(--accent); }
+
+.gh-icon {
+  width: 14px; height: 14px; fill: currentColor;
+}
+
+/* ── notice box ── */
+.notice {
+  margin-top: 2.5rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--c2);
+  border-radius: 0 10px 10px 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.8;
+  opacity: 0;
+  animation: fadeIn 0.8s 1.6s forwards;
+}
+.notice strong { color: var(--c2); font-weight: 500; }
+.notice code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: rgba(255,255,255,0.07);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--c3);
+}
+
+/* ── footer ── */
+.page-footer {
+  text-align: center;
+  padding: 2rem 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--hint);
+  letter-spacing: 0.05em;
+  opacity: 0;
+  animation: fadeIn 0.8s 1.8s forwards;
+}
+
+/* ── scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* ── responsive ── */
+@media (max-width: 600px) {
+  .card-inner { padding: 1.25rem; }
+  .hero { padding: 4rem 0 3rem; }
+  .features { grid-template-columns: 1fr; }
+  .card-head { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="wrap">
+
+  <!-- hero -->
+  <header class="hero">
+    <p class="hero-eyebrow">Claude Code · 2026 必装清单</p>
+    <h1>
+      5 个改变工作方式的
+      <span class="line2">必装 Skills</span>
+    </h1>
+    <p class="hero-sub">社区精选，覆盖开发工作流、内容创作、UI 设计与工程规范，让 AI 真正听话</p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-dot" style="background:var(--c2)"></span>
+        开源免费
+      </div>
+      <div class="meta-item">
+        <span class="meta-dot" style="background:var(--c1)"></span>
+        200k+ 总安装
+      </div>
+      <div class="meta-item">
+        <span class="meta-dot" style="background:var(--c3)"></span>
+        自动触发 · 零配置
+      </div>
+    </div>
+  </header>
+
+  <div class="divider"></div>
+
+  <!-- skills -->
+  <div class="skills">
+
+    <!-- 1. Superpowers -->
+    <div class="skill-card">
+      <div class="card-inner">
+        <div class="card-head">
+          <div class="card-icon">⚡</div>
+          <div class="card-meta">
+            <div class="card-title">Superpowers</div>
+            <div class="card-by">obra/superpowers · Jesse Vincent 出品</div>
+            <div class="card-stars">⭐ 42k+</div>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag">开发流程</span>
+          <span class="tag">TDD</span>
+          <span class="tag">并行 Agent</span>
+          <span class="tag">自动触发</span>
+          <span class="tag">14 个技能</span>
+        </div>
+        <p class="card-desc">最成熟的 AI 软件开发方法论框架。强制执行「先思考 → 写测试 → 实现 → 审查」完整流程，大幅减少 token 浪费和返工。技能自动触发，无需记忆任何命令，Claude Code 拥有了开箱即用的软件工程纪律。</p>
+        <div class="features">
+          <div class="feat"><div class="feat-dot"></div>Brainstorm → Plan → Implement 三段式</div>
+          <div class="feat"><div class="feat-dot"></div>严格 TDD 红绿重构循环</div>
+          <div class="feat"><div class="feat-dot"></div>Git Worktree 隔离并行开发</div>
+          <div class="feat"><div class="feat-dot"></div>并行 Subagent 多任务</div>
+          <div class="feat"><div class="feat-dot"></div>两阶段代码审查</div>
+          <div class="feat"><div class="feat-dot"></div>支持编写自定义技能</div>
+        </div>
+        <div class="usage-box">
+          <div class="usage-header">
+            <div class="terminal-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+            <span class="usage-label-txt">Claude Code — 使用方式</span>
+          </div>
+          <div class="usage-lines">
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/brainstorm</span>
+                <span class="usage-hint">描述你要构建的功能，Claude 先追问、出设计文档，再动手写代码</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/execute-plan</span>
+                <span class="usage-hint">将已有的实现计划交给 Subagent 并行执行，带审查检查点</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">自动触发</span>
+                <span class="usage-hint">直接描述任务即可，技能会在合适阶段自动激活，无需记忆命令</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <a class="gh-link" href="https://github.com/obra/superpowers" target="_blank">
+            <svg class="gh-icon" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            github.com/obra/superpowers
+          </a>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--hint)">官方 Anthropic Marketplace</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. baoyu-skills -->
+    <div class="skill-card">
+      <div class="card-inner">
+        <div class="card-head">
+          <div class="card-icon">🐉</div>
+          <div class="card-meta">
+            <div class="card-title">baoyu-skills</div>
+            <div class="card-by">JimLiu/baoyu-skills · 宝玉出品 · 22 个技能</div>
+            <div class="card-stars">⭐ 285k 总安装</div>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag">内容创作</span>
+          <span class="tag">小红书</span>
+          <span class="tag">微信公众号</span>
+          <span class="tag">X/Twitter</span>
+          <span class="tag">图文生成</span>
+          <span class="tag">中文生态</span>
+        </div>
+        <p class="card-desc">面向中文内容创作者的一站式工具包，覆盖从生成到发布的完整工作流。以 Gemini API 为图像生成后端，Chrome CDP 实现浏览器自动化发布，国内社交平台全覆盖，无需额外配置。</p>
+        <div class="features">
+          <div class="feat"><div class="feat-dot"></div>小红书图文卡片系列生成</div>
+          <div class="feat"><div class="feat-dot"></div>PPT Slide 自动生成</div>
+          <div class="feat"><div class="feat-dot"></div>文章配图 + 漫画风格插图</div>
+          <div class="feat"><div class="feat-dot"></div>一键发布 X / 微博 / 微信</div>
+          <div class="feat"><div class="feat-dot"></div>Markdown 格式化 + HTML 转换</div>
+          <div class="feat"><div class="feat-dot"></div>翻译 / 图片压缩 / URL 转 MD</div>
+        </div>
+        <div class="usage-box">
+          <div class="usage-header">
+            <div class="terminal-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+            <span class="usage-label-txt">Claude Code — 使用方式</span>
+          </div>
+          <div class="usage-lines">
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/baoyu-xhs-images article.md</span>
+                <span class="usage-hint">将文章自动拆解为 1–10 张小红书风格图文卡片，支持 --style notion/tech 等</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/baoyu-post-to-x "Hello from Claude Code!"</span>
+                <span class="usage-hint">直接发推，Markdown 文件自动识别为 X Article 长文格式</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/baoyu-slide-deck topic.md</span>
+                <span class="usage-hint">根据内容自动生成带大纲的 PPT 演示文稿，支持多种视觉风格</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <a class="gh-link" href="https://github.com/JimLiu/baoyu-skills" target="_blank">
+            <svg class="gh-icon" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            github.com/JimLiu/baoyu-skills
+          </a>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--hint)">clawhub 支持单独安装</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. gstack -->
+    <div class="skill-card">
+      <div class="card-inner">
+        <div class="card-head">
+          <div class="card-icon">🏗</div>
+          <div class="card-meta">
+            <div class="card-title">gstack</div>
+            <div class="card-by">garrytan/gstack · Y Combinator CEO Garry Tan 出品 · 23 个技能</div>
+            <div class="card-stars">⭐ 高增长中</div>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag">虚拟工程团队</span>
+          <span class="tag">代码审查</span>
+          <span class="tag">安全防护</span>
+          <span class="tag">并行开发</span>
+          <span class="tag">产品策略</span>
+        </div>
+        <p class="card-desc">将 Claude Code 变成完整虚拟工程团队：CEO 审产品方向、工程经理锁架构、设计师抓 AI 审美、QA 用真实浏览器测试、安全官执行 OWASP + STRIDE 审计、发布工程师推 PR。支持 10 个会话同时并行。</p>
+        <div class="features">
+          <div class="feat"><div class="feat-dot"></div>/office-hours — CEO 视角产品方向</div>
+          <div class="feat"><div class="feat-dot"></div>/plan-eng-review — 工程架构评审</div>
+          <div class="feat"><div class="feat-dot"></div>/design-review — 视觉设计审查</div>
+          <div class="feat"><div class="feat-dot"></div>/careful /freeze /guard 安全护栏</div>
+          <div class="feat"><div class="feat-dot"></div>/investigate — 自动冻结调试</div>
+          <div class="feat"><div class="feat-dot"></div>/ship /qa — 发布与浏览器 QA</div>
+        </div>
+        <div class="usage-box">
+          <div class="usage-header">
+            <div class="terminal-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+            <span class="usage-label-txt">Claude Code — 使用方式</span>
+          </div>
+          <div class="usage-lines">
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/office-hours</span>
+                <span class="usage-hint">以 CEO 视角重新审视你的产品方向，在动手前理清真正要解决的问题</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/review</span>
+                <span class="usage-hint">对当前代码执行双阶段审查：功能正确性 + 代码质量，输出可操作的改进建议</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">说 "be careful" 激活 /careful</span>
+                <span class="usage-hint">开启安全护栏，执行 rm -rf / DROP TABLE / force-push 前强制二次确认</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <a class="gh-link" href="https://github.com/garrytan/gstack" target="_blank">
+            <svg class="gh-icon" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            github.com/garrytan/gstack
+          </a>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--hint)">MIT License</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. mattpocock/skills -->
+    <div class="skill-card">
+      <div class="card-inner">
+        <div class="card-head">
+          <div class="card-icon">🧙</div>
+          <div class="card-meta">
+            <div class="card-title">mattpocock/skills</div>
+            <div class="card-by">mattpocock/skills · TypeScript 大师 Matt Pocock 出品 · 21 个技能</div>
+            <div class="card-stars">⭐ 48k+</div>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag">TypeScript</span>
+          <span class="tag">TDD</span>
+          <span class="tag">工作流强制</span>
+          <span class="tag">Git 安全</span>
+          <span class="tag">需求对齐</span>
+        </div>
+        <p class="card-desc">真实工程师 .claude 目录的公开版本，不追求功能堆砌，专注解决「AI 不理解意图」的核心问题。用 grill-me 逼 Claude 持续追问直到真正理解需求再动手。GitHub 趋势连续 6 天 Top 2。</p>
+        <div class="features">
+          <div class="feat"><div class="feat-dot"></div>grill-me — 苏格拉底式需求澄清</div>
+          <div class="feat"><div class="feat-dot"></div>tdd — 测试驱动开发强制</div>
+          <div class="feat"><div class="feat-dot"></div>git-guardrails — 危险命令拦截</div>
+          <div class="feat"><div class="feat-dot"></div>to-prd — 需求拆解为 PRD</div>
+          <div class="feat"><div class="feat-dot"></div>zoom-out — 架构宏观审查</div>
+          <div class="feat"><div class="feat-dot"></div>write-a-skill — 编写自定义技能</div>
+        </div>
+        <div class="usage-box">
+          <div class="usage-header">
+            <div class="terminal-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+            <span class="usage-label-txt">Claude Code — 使用方式</span>
+          </div>
+          <div class="usage-lines">
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/grill-me</span>
+                <span class="usage-hint">Claude 会连续追问直到完全理解你的意图，避免「写完才发现理解错了」</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/tdd</span>
+                <span class="usage-hint">强制先写失败测试再实现，红 → 绿 → 重构，适合任何语言的功能开发</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">/to-prd</span>
+                <span class="usage-hint">将模糊需求拆解为结构化 PRD，再用 /zoom-out 做架构层面的宏观审查</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <a class="gh-link" href="https://github.com/mattpocock/skills" target="_blank">
+            <svg class="gh-icon" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            github.com/mattpocock/skills
+          </a>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--hint)">先运行 setup-matt-pocock-skills 初始化</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. ui-ux-pro-max -->
+    <div class="skill-card">
+      <div class="card-inner">
+        <div class="card-head">
+          <div class="card-icon">🎨</div>
+          <div class="card-meta">
+            <div class="card-title">ui-ux-pro-max-skill</div>
+            <div class="card-by">nextlevelbuilder/ui-ux-pro-max-skill</div>
+            <div class="card-stars">⭐ 75k+</div>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag">UI/UX</span>
+          <span class="tag">设计系统</span>
+          <span class="tag">15+ 技术栈</span>
+          <span class="tag">自动触发</span>
+          <span class="tag">全球第一</span>
+        </div>
+        <p class="card-desc">全球最受欢迎的社区 UI 设计智能技能（75k stars）。内置可搜索设计数据库：67 种 UI 风格、161 个配色方案、57 套字体搭配、99 条 UX 规范。输入「fintech dashboard」自动生成完整设计系统，告别千篇一律的 AI 审美。</p>
+        <div class="features">
+          <div class="feat"><div class="feat-dot"></div>Design System Generator 一键生成</div>
+          <div class="feat"><div class="feat-dot"></div>161 个配色 + 57 套字体搭配</div>
+          <div class="feat"><div class="feat-dot"></div>React/Next/Vue/Flutter/SwiftUI</div>
+          <div class="feat"><div class="feat-dot"></div>Python CLI 可搜索设计知识库</div>
+          <div class="feat"><div class="feat-dot"></div>UX 反模式自动检查</div>
+          <div class="feat"><div class="feat-dot"></div>Master.md 跨页面风格一致性</div>
+        </div>
+        <div class="usage-box">
+          <div class="usage-header">
+            <div class="terminal-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+            <span class="usage-label-txt">Claude Code — 使用方式</span>
+          </div>
+          <div class="usage-lines">
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">帮我做一个 fintech 风格的 dashboard</span>
+                <span class="usage-hint">技能自动触发，生成配色/字体/间距/组件风格完整设计系统，再出代码</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">search.py "glassmorphism SaaS" --design-system</span>
+                <span class="usage-hint">CLI 搜索设计知识库，返回风格推荐 + 反模式警告 + 实现参考</span>
+              </div>
+            </div>
+            <div class="usage-row">
+              <span class="usage-prompt">›</span>
+              <div class="usage-content">
+                <span class="usage-cmd">--persist 生成 design-system/MASTER.md</span>
+                <span class="usage-hint">持久化设计系统到项目，后续所有页面引用同一规范，风格自动保持一致</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <a class="gh-link" href="https://github.com/nextlevelbuilder/ui-ux-pro-max-skill" target="_blank">
+            <svg class="gh-icon" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            github.com/nextlevelbuilder/ui-ux-pro-max-skill
+          </a>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--hint)">对话中直接说需求即可自动触发</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /skills -->
+
+  <!-- notice -->
+  <div class="notice">
+    <strong>使用技巧</strong>：大多数技能在你自然描述任务时会<strong>自动触发</strong>，无需记忆命令。遇到 Superpowers 和 gstack 时，直接说「我要构建 X 功能」；baoyu-skills 用 <code>/baoyu-</code> 前缀调用；mattpocock/skills 从 <code>/grill-me</code> 开始；ui-ux-pro-max 只需说出设计需求，技能自动分析并生成设计系统。
+  </div>
+
+  <footer class="page-footer">
+    <p>Claude Code Skills · 2026 · 开源免费 · MIT License</p>
+  </footer>
+
+</div>
+
+<script>
+// intersection observer for scroll reveal
+const cards = document.querySelectorAll('.skill-card');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.animationPlayState = 'running';
+    }
+  });
+}, { threshold: 0.1 });
+cards.forEach(c => io.observe(c));
+</script>
+
+</body>
+</html>
