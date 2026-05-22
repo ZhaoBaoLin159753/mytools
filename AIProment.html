@@ -3,21 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI提示词生成工具</title>
+    <title>AI高级提示词生成工具</title>
     <style>
         :root {
-            --primary-color: #409eff; /* 蓝色按钮 */
-            --success-color: #2cbb55; /* 绿色按钮 */
-            --bg-color: #f5f7fa;
+            --primary-gradient: linear-gradient(135deg, #3a8ee6, #409eff);
+            --success-gradient: linear-gradient(135deg, #23b754, #2cbb55);
+            --bg-color: #f0f2f5;
             --card-bg: #ffffff;
-            --text-color: #333;
-            --border-color: #dcdfe6;
-            --radius: 8px;
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+            --border-color: #e2e8f0;
+            --radius-lg: 12px;
+            --radius-md: 6px;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
-            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -29,126 +34,198 @@
 
         .container {
             background-color: var(--card-bg);
-            width: 1000px;
+            width: 1100px;
             padding: 40px;
-            border-radius: var(--radius);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: 1px;
+            margin-top: 0;
+            margin-bottom: 35px;
+            font-size: 26px;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
         }
 
         .main-content {
             display: flex;
-            gap: 30px;
+            gap: 35px;
         }
 
-        /* 左侧区域 */
-        .left-panel {
+        /* 左右面板 */
+        .left-panel, .right-panel {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 15px;
-        }
-
-        /* 右侧区域 */
-        .right-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+            gap: 20px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            margin-bottom: 5px;
         }
 
         label {
             font-size: 14px;
-            color: #606266;
+            color: var(--text-main);
             margin-bottom: 8px;
-            font-weight: 500;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        label::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 14px;
+            background: #409eff;
+            margin-right: 6px;
+            border-radius: 2px;
         }
 
         select, textarea {
             width: 100%;
-            padding: 10px 12px;
+            padding: 12px 16px;
             border: 1px solid var(--border-color);
-            border-radius: 4px;
+            border-radius: var(--radius-md);
             font-size: 14px;
-            line-height: 1.5;
-            color: var(--text-color);
+            line-height: 1.6;
+            color: var(--text-main);
             outline: none;
-            box-sizing: border-box; /* 确保padding不撑大宽度 */
-            transition: border-color 0.2s;
+            box-sizing: border-box;
+            transition: var(--transition);
+            background-color: #fafbfc;
             font-family: inherit;
         }
 
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237f8c8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: calc(100% - 16px) center;
+            padding-right: 40px;
+        }
+
         select:focus, textarea:focus {
-            border-color: var(--primary-color);
+            border-color: #409eff;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(64, 159, 255, 0.12);
         }
 
         textarea {
             resize: vertical;
         }
 
-        /* 输入内容框的高度 */
         #inputContent {
-            height: 150px;
+            height: 180px;
         }
 
-        /* 生成结果框的高度 - 填满右侧 */
         #outputPrompt {
             flex: 1;
-            background-color: #fcfcfc;
-            min-height: 380px;
+            background-color: #f8fafc;
+            min-height: 440px;
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            font-size: 13px;
+            color: #334155;
+        }
+        
+        #outputPrompt[readonly] {
+            cursor: text;
         }
 
+        /* 按钮设计 */
         .btn-group {
-            margin-top: 10px;
+            margin-top: 5px;
             display: flex;
-            flex-direction: column;
             gap: 15px;
         }
 
         button {
-            width: 100%;
-            padding: 12px 20px;
+            flex: 1;
+            padding: 13px 24px;
             border: none;
-            border-radius: 4px;
-            font-size: 16px;
+            border-radius: var(--radius-md);
+            font-size: 15px;
             color: white;
             cursor: pointer;
-            transition: opacity 0.2s;
-            font-weight: 500;
+            transition: var(--transition);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         }
 
-        button:hover {
-            opacity: 0.9;
+        button:active {
+            transform: scale(0.98);
         }
 
         .btn-generate {
-            background-color: var(--primary-color);
+            background: var(--primary-gradient);
+        }
+        .btn-generate:hover {
+            box-shadow: 0 6px 14px rgba(64, 159, 255, 0.3);
         }
 
         .btn-copy {
-            background-color: var(--success-color);
+            background: var(--success-gradient);
+        }
+        .btn-copy:hover {
+            box-shadow: 0 6px 14px rgba(44, 187, 85, 0.3);
         }
 
-        /* 响应式适配手机 */
-        @media (max-width: 768px) {
+        /* 提示通知组件样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            background: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: var(--transition);
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 900px) {
             .main-content {
                 flex-direction: column;
+                gap: 25px;
             }
             .container {
                 width: 100%;
-                padding: 20px;
+                padding: 25px;
+            }
+            #outputPrompt {
+                min-height: 300px;
             }
         }
     </style>
@@ -156,25 +233,25 @@
 <body>
 
 <div class="container">
-    <h1>AI提示词生成工具</h1>
+    <h1>AI 提示词生成工具</h1>
     
     <div class="main-content">
         <div class="left-panel">
             <div class="form-group">
-                <label>选择平台</label>
+                <label for="platformSelect">选择目标发布平台</label>
                 <select id="platformSelect">
-                    <option value="公众号">公众号</option>
-                    <option value="头条号">头条号</option>
+                    <option value="公众号">微信公众号（注重深度、共鸣与排版）</option>
+                    <option value="头条号">今日头条（注重资讯密度、冲突与推荐算法）</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label>选择领域</label>
+                <label for="domainSelect">选择创作专业领域</label>
                 <select id="domainSelect">
-                    <option value="汽车">汽车</option>
-                    <option value="软件开发">软件开发</option>
+                    <option value="汽车">汽车（新车评测/智能出行/行业趋势）</option>
+                    <option value="软件开发">软件开发（技术实战/架构设计/前沿代码）</option>
                     <option value="科技数码">科技数码</option>
-                    <option value="财经">财经</option>
+                    <option value="财经">财经（宏观分析/理财科普/商业底层逻辑）</option>
                     <option value="健康">健康</option>
                     <option value="情感">情感</option>
                     <option value="副业">副业</option>
@@ -182,82 +259,139 @@
             </div>
 
             <div class="form-group">
-                <label>信息内容</label>
-                <textarea id="inputContent" placeholder="在此输入文章的核心素材、数据或主要观点..."></textarea>
+                <label for="inputContent">核心素材与信息内容</label>
+                <textarea id="inputContent" placeholder="在此处粘贴或输入您的文章核心素材、原始数据、热点事件或主要观点，AI 将基于此自动扩写..."></textarea>
             </div>
 
             <div class="btn-group">
-                <button class="btn-generate" onclick="generatePrompt()">生成提示词</button>
-                <button class="btn-copy" onclick="copyResult()">复制提示词和内容</button>
+                <button class="btn-generate" onclick="generatePrompt()">
+                    <span>✨ 生成大师级提示词</span>
+                </button>
+                <button class="btn-copy" onclick="copyResult()">
+                    <span>📋 复制完整提示词</span>
+                </button>
             </div>
         </div>
 
         <div class="right-panel">
             <div class="form-group" style="height: 100%;">
-                <label>生成的提示词</label>
-                <textarea id="outputPrompt" readonly placeholder="点击“生成提示词”按钮后，结果将显示在这里..."></textarea>
+                <label for="outputPrompt">生成的系统级 Prompt</label>
+                <textarea id="outputPrompt" readonly placeholder="精细化配置的提示词将在生成后在此处展示，可直接复制投入到 ChatGPT / Claude / DeepSeek 等大模型中使用..."></textarea>
             </div>
         </div>
     </div>
 </div>
 
+<div id="toast" class="toast"></div>
+
 <script>
+    // 动态生成领域特色词
+    function getDomainContext(domain) {
+        const contexts = {
+            "汽车": "熟悉各大车企最新动态、智能座舱、自动驾驶技术以及车主实际用车痛点。",
+            "软件开发": "具备深厚的架构思维，熟悉代码最佳实践，能化繁为简解释复杂的技术概念，注重逻辑与代码严谨性。",
+            "科技数码": "对半导体、消费电子、AI硬件有敏锐洞察，崇尚极客精神，能将硬核技术参数转化为白话解读。",
+            "财经": "具备严谨的商业洞察力，擅长通过宏观数据剖析底层商业逻辑，注重合规性与理性分析。",
+            "健康": "遵循科学循证医学原则，科普语言通俗易懂，多用案例消解医学术语的冰冷感，提供切实可行的建议。",
+            "情感": "极具同理心与细腻的心理洞察，擅长抓取亲密关系或社会话题中的情绪共鸣点，提供松弛的情绪价值。",
+            "副业": "切合普通人搞钱痛点，聚焦低门槛、可落地的实操步骤，提供认知破局和执行手记，拒绝空洞鸡汤。"
+        };
+        return contexts[domain] || "拥有该行业资深的从业经验与深厚的内容沉淀。";
+    }
+
     function generatePrompt() {
         const platform = document.getElementById('platformSelect').value;
         const domain = document.getElementById('domainSelect').value;
         const content = document.getElementById('inputContent').value.trim();
         
-        // 如果用户没有输入内容，给一个默认提示
-        const contentText = content ? content : "（此处粘贴具体的文章素材内容）";
+        const contentText = content ? content : "[请在此处直接粘贴您的具体素材、核心观点或大纲，大模型将会基于此进行深度创作]";
+        const domainContext = getDomainContext(domain);
 
-        // 根据平台调整微调风格要求
         let styleRequirement = "";
         let structureRequirement = "";
 
+        // 根据平台进行针对性、可执行的 Prompt 微调
         if (platform === "公众号") {
-            styleRequirement = `2. 风格定位：像老朋友聊天一样亲切自然，多用短句、反问句和网络热梗，注重情绪价值，避免生硬的说明书式语言。\n3. 排版优化：重点内容进行加粗，段落要短，方便手机阅读。`;
-            structureRequirement = `4. 结尾：给出具体的建议或情感升华，并设置2个互动问题引导粉丝在评论区留言。`;
+            styleRequirement = `* **语气风格**：采用“半熟人聊天”的亲切语调，多用“你”、“我们”，善用短句和设问，适度融入当下网络热梗，拒绝说教感。
+* **排版视觉**：段落保持在 2-4 行之间以利于手机屏幕阅读；核心金句单独成行并做【加粗】处理，适当留白。`;
+            structureRequirement = `* **结尾升华**：输出一个具有共鸣感的“树洞式”结尾。提供 1-2 条落地的实操建议，并抛出 2 个直击痛点的问题，强力引导读者在评论区留言互动。`;
         } else {
-            // 头条号风格：更注重资讯密度、观点犀利、推荐机制
-            styleRequirement = `2. 风格定位：观点犀利，逻辑严密，信息密度高。标题要足够吸睛（符合算法推荐机制），正文多用数据说话。\n3. 排版优化：清晰的小标题结构，图文并茂感强（用文字描述图片位置），适合快速资讯浏览。`;
-            structureRequirement = `4. 结尾：总结核心观点，引导读者关注和转发，引发争议或讨论。`;
+            styleRequirement = `* **语气风格**：直奔主题、观点犀利，信息密度高，多用“数据”、“事实”和“对比”说话，充满行业洞察力与说服力。
+* **排版视觉**：结构层级分明，使用清晰的 H2/H3 小标题。文章中预留 2-3 处写实或信息丰富的【插图位置提示（用括号标出描述）】。`;
+            structureRequirement = `* **结尾引导**：简明扼要地总结核心论点，引发争议或深度思辨，设置明确的引导动作：“欢迎点赞、关注并转发，说说你对XX的看法？”。`;
         }
 
-        // 构建提示词模版
-        const prompt = `你是一名专业的【${domain}领域博主】，请结合【输入信息】写一篇【${platform}】文章。
+        // 构建符合金字塔原理的标准化大模型 Prompt
+        const prompt = `# Role: 资深【${domain}】领域头部博主
 
-【写作要求】：
-1. 字数控制：1200-1600字，内容详实但不注水。
+## Profile
+你是一位长期深耕【${domain}】行业的爆款文章操盘手。${domainContext}你非常熟悉【${platform}】的用户画像、阅读习惯以及平台的潜在推荐算法机制。
+
+## Task
+请基于【输入素材】的内容，为你量身定制撰写一篇高质量的【${platform}】推文。
+
+---
+
+## Constraints (写作约束)
+1. **字数规范**：正文字数严格控制在 1200-1600 字之间，内容逻辑严密，严禁空洞的废话和注水文学。
+2. **风格定位**：
 ${styleRequirement}
 
-【文章结构】：
-1. 标题：请先提供5个吸引人的标题（15-25字，含关键词，符合${platform}调性）供选择。
-2. 引入：用热点事件或用户痛点（结合${domain}领域常见的痛点）开篇。
-3. 正文（总-分-总）：先抛出核心观点，再细分技术/案例/深度解读，最后总结。
+---
+
+## Workflow & Structure (文章结构流程)
+
+1. **爆款标题库 (Headline Matrix)**
+   * 请根据【${platform}】的算法抓取法则和吸睛习惯，率先提供 5 个不同维度的标题供我选择（15-25字，含核心关键词，要求有冲突感、悬念感或强获得感）。
+
+2. **痛点引入 (Hook)**
+   * 严禁平铺直叙。请用近期行业热点事件、或是直戳【${domain}】领域目标用户最头疼的“原生痛点”作为开篇，在 150 字内抓住读者眼球。
+
+3. **正文构建 (Body - 黄金三段论)**
+   * 采用“总-分-总”或“层层递进”的逻辑。
+   * **核心观点**：开门见山抛出论点。
+   * **深度拆解**：结合输入的信息，进行案例拆解、技术还原、或数据横向对比，保证论据扎实。
+
+4. **结尾机制 (Call to Action)**
 ${structureRequirement}
 
-【输入信息如下】：
-${contentText}`;
+---
 
-        // 输出到右侧文本框
+## Input Information (输入素材内容)
+${contentText}
+
+---
+## Output Limitation
+请直接开始按结构输出，不需要任何多余的寒暄。`;
+
         document.getElementById('outputPrompt').value = prompt;
+        showToast("✨ 提示词生成成功！");
     }
 
     function copyResult() {
         const promptText = document.getElementById('outputPrompt').value;
         
-        if (!promptText) {
-            alert("请先生成提示词！");
+        if (!promptText || promptText.startsWith("点击“生成提示词”")) {
+            showToast("⚠️ 请先生成提示词再进行复制！");
             return;
         }
 
-        // 使用 Clipboard API 复制
         navigator.clipboard.writeText(promptText).then(() => {
-            alert("✅ 提示词已成功复制到剪贴板！");
+            showToast("✅ 提示词已成功复制到剪贴板！");
         }).catch(err => {
             console.error('复制失败: ', err);
-            alert("复制失败，请手动复制。");
+            showToast("❌ 复制失败，请手动选择复制。");
         });
+    }
+
+    // 自定义轻量提示组件代替系统丑陋的 Alert
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.innerText = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
     }
 </script>
 
