@@ -3,280 +3,498 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI高级提示词生成工具</title>
+    <title>AI 提示词生成工具 · 平台 × 领域 双维定制</title>
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #3a8ee6, #409eff);
-            --success-gradient: linear-gradient(135deg, #23b754, #2cbb55);
-            --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-main: #2c3e50;
-            --text-sub: #7f8c8d;
-            --border-color: #e2e8f0;
-            --radius-lg: 12px;
-            --radius-md: 6px;
-            --shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --primary: #4f7cff;
+            --primary-deep: #3a5fd9;
+            --accent: #ff2442;
+            --text-main: #1f2733;
+            --text-sub: #7a8599;
+            --border-color: #e4e9f2;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 16px 48px rgba(31, 48, 90, 0.09);
+            --shadow-card: 0 2px 10px rgba(31, 48, 90, 0.05);
+            --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        * { box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
+            background:
+                radial-gradient(900px 360px at 12% -8%, rgba(79, 124, 255, 0.09), transparent 60%),
+                radial-gradient(800px 320px at 90% -12%, rgba(255, 77, 109, 0.07), transparent 60%),
+                #f4f6fb;
             color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            padding: 36px 20px;
+            display: flex;
+            justify-content: center;
         }
 
         .container {
-            background-color: var(--card-bg);
-            width: 1100px;
-            padding: 40px;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow);
+            width: 1180px;
+            max-width: 100%;
         }
 
-        h1 {
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 35px;
-            font-size: 26px;
-            font-weight: 700;
-            color: #1a1a1a;
-            letter-spacing: 0.5px;
-            position: relative;
+        /* ==================== 头部 ==================== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 26px;
         }
-        
-        h1::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 4px;
-            background: var(--primary-gradient);
-            border-radius: 2px;
+        .logo-tile {
+            width: 52px; height: 52px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #3a5fd9, #4f7cff 55%, #7a9bff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(79, 124, 255, 0.35);
+            flex-shrink: 0;
+        }
+        .header-text h1 {
+            margin: 0 0 4px;
+            font-size: 27px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .header-text h1 .hl {
+            background: linear-gradient(120deg, #3a5fd9, #4f7cff 50%, #ff4d6d);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-text p {
+            margin: 0;
+            font-size: 13.5px;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .kbd-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11.5px;
+            color: var(--text-sub);
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 2px 9px;
+            box-shadow: var(--shadow-card);
+        }
+        .kbd-hint svg { color: var(--primary); }
+
+        /* ==================== 主卡片 ==================== */
+        .main-card {
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 30px 34px;
+            border: 1px solid rgba(228, 233, 242, 0.8);
         }
 
         .main-content {
             display: flex;
-            gap: 35px;
+            gap: 34px;
         }
 
-        /* 左右面板 */
         .left-panel, .right-panel {
             flex: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 24px;
         }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            font-size: 14px;
-            color: var(--text-main);
-            margin-bottom: 8px;
-            font-weight: 600;
+        /* ==================== 区块标题 ==================== */
+        .section-label {
             display: flex;
             align-items: center;
-        }
-
-        label::before {
-            content: '';
-            display: inline-block;
-            width: 4px;
-            height: 14px;
-            background: #409eff;
-            margin-right: 6px;
-            border-radius: 2px;
-        }
-
-        select, textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
+            gap: 9px;
             font-size: 14px;
-            line-height: 1.6;
-            color: var(--text-main);
-            outline: none;
-            box-sizing: border-box;
-            transition: var(--transition);
-            background-color: #fafbfc;
-            font-family: inherit;
+            font-weight: 700;
+            margin-bottom: 13px;
+        }
+        .section-label .no {
+            width: 21px; height: 21px;
+            border-radius: 7px;
+            background: linear-gradient(135deg, var(--primary-deep), var(--primary));
+            color: #fff;
+            font-size: 11.5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .section-label .tip {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text-sub);
+            margin-left: auto;
         }
 
-        select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237f8c8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: calc(100% - 16px) center;
-            padding-right: 40px;
+        /* ==================== 平台卡片 ==================== */
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
         }
-
-        select:focus, textarea:focus {
-            border-color: #409eff;
-            background-color: #fff;
-            box-shadow: 0 0 0 3px rgba(64, 159, 255, 0.12);
-        }
-
-        textarea {
-            resize: vertical;
-        }
-
-        #inputContent {
-            height: 180px;
-        }
-
-        #outputPrompt {
-            flex: 1;
-            background-color: #f8fafc;
-            min-height: 440px;
-            font-family: 'Fira Code', Consolas, Monaco, monospace;
-            font-size: 13px;
-            color: #334155;
-        }
-        
-        #outputPrompt[readonly] {
-            cursor: text;
-        }
-
-        /* 按钮设计 */
-        .btn-group {
-            margin-top: 5px;
-            display: flex;
-            gap: 15px;
-        }
-
-        button {
-            flex: 1;
-            padding: 13px 24px;
-            border: none;
+        .platform-card {
+            position: relative;
+            border: 1.5px solid var(--border-color);
             border-radius: var(--radius-md);
-            font-size: 15px;
-            color: white;
+            background: #fafbff;
+            padding: 14px;
             cursor: pointer;
             transition: var(--transition);
-            font-weight: 600;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .platform-card:hover {
+            border-color: color-mix(in srgb, var(--pc) 45%, var(--border-color));
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
+        }
+        .platform-card.active {
+            border-color: var(--pc);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 7%, #fff), #fdfdff);
+            box-shadow: 0 5px 16px color-mix(in srgb, var(--pc) 22%, transparent);
+        }
+        .platform-card.active::after {
+            content: '';
+            position: absolute;
+            top: 9px; right: 9px;
+            width: 17px; height: 17px;
+            background: var(--pc);
+            border-radius: 50%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6.5 9.5 17 4.5 12'/%3E%3C/svg%3E");
+            background-size: 10px;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .p-icon-tile {
+            width: 44px; height: 44px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            color: var(--pc);
+            background: color-mix(in srgb, var(--pc) 10%, #fff);
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+        .platform-card.active .p-icon-tile {
+            background: var(--pc);
+            color: #fff;
+            box-shadow: 0 4px 10px color-mix(in srgb, var(--pc) 40%, transparent);
+        }
+        .p-info { min-width: 0; }
+        .p-name {
+            font-size: 14.5px;
+            font-weight: 700;
+        }
+        .p-desc {
+            font-size: 11px;
+            color: var(--text-sub);
+            line-height: 1.5;
+            margin-top: 2px;
         }
 
-        button:active {
-            transform: scale(0.98);
+        /* ==================== 领域标签 ==================== */
+        .domain-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 15px 8px 11px;
+            border-radius: 999px;
+            border: 1.5px solid var(--border-color);
+            background: #fafbff;
+            font-size: 13.5px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+        }
+        .chip svg { color: var(--dc); flex-shrink: 0; transition: var(--transition); }
+        .chip:hover { border-color: color-mix(in srgb, var(--dc) 45%, var(--border-color)); transform: translateY(-1px); }
+        .chip.active {
+            background: linear-gradient(135deg, var(--primary-deep), var(--primary));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(79, 124, 255, 0.3);
+        }
+        .chip.active svg { color: #fff; }
+
+        /* ==================== 输入区 ==================== */
+        textarea {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-main);
+            outline: none;
+            transition: var(--transition);
+            background: #fafbff;
+            font-family: inherit;
+            resize: vertical;
+        }
+        textarea:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
+        }
+        #inputContent { height: 148px; }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 6px;
         }
 
+        /* ==================== 输出窗口 ==================== */
+        .output-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: #fbfcfe;
+            transition: var(--transition);
+            min-height: 500px;
+        }
+        .output-window:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
+        }
+        .ow-titlebar {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 14px;
+            background: #eef1f8;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .ow-dot { width: 11px; height: 11px; border-radius: 50%; }
+        .ow-dot.r { background: #ff5f57; }
+        .ow-dot.y { background: #febc2e; }
+        .ow-dot.g { background: #28c840; }
+        .ow-title {
+            margin-left: 8px;
+            font-size: 12px;
+            color: var(--text-sub);
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ow-title svg { color: var(--primary); }
+        .ow-meta {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+        }
+        .meta-tag {
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: #e9efff;
+            color: var(--primary-deep);
+            font-size: 11.5px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .meta-tag.accent {
+            background: #ffe9ee;
+            color: var(--accent);
+        }
+        #outputPrompt {
+            flex: 1;
+            border: none;
+            border-radius: 0;
+            background: transparent;
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            font-size: 12.5px;
+            line-height: 1.75;
+            color: #2c3a4d;
+            min-height: 0;
+            resize: none;
+        }
+        #outputPrompt:focus { box-shadow: none; border: none; background: transparent; }
+
+        /* ==================== 按钮 ==================== */
+        .btn-group {
+            display: flex;
+            gap: 14px;
+        }
+        button {
+            flex: 1;
+            padding: 14px 22px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            color: #fff;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            font-family: inherit;
+        }
+        button:active { transform: scale(0.98); }
         .btn-generate {
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #4f7cff, #6b9bff);
+            box-shadow: 0 6px 16px rgba(79, 124, 255, 0.32);
         }
-        .btn-generate:hover {
-            box-shadow: 0 6px 14px rgba(64, 159, 255, 0.3);
-        }
-
+        .btn-generate:hover { filter: brightness(1.06); box-shadow: 0 8px 22px rgba(79, 124, 255, 0.42); }
         .btn-copy {
-            background: var(--success-gradient);
+            background: linear-gradient(135deg, #1fa952, #2cbb55);
+            box-shadow: 0 6px 16px rgba(44, 187, 85, 0.28);
         }
-        .btn-copy:hover {
-            box-shadow: 0 6px 14px rgba(44, 187, 85, 0.3);
-        }
+        .btn-copy:hover { filter: brightness(1.06); }
 
-        /* 提示通知组件样式 */
+        /* ==================== Toast ==================== */
         .toast {
             position: fixed;
-            top: 20px;
-            background: #333;
+            top: 24px;
+            left: 50%;
+            transform: translate(-50%, -20px);
+            background: rgba(28, 32, 44, 0.94);
             color: #fff;
-            padding: 12px 24px;
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 11px 24px;
+            border-radius: 999px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
             font-size: 14px;
             z-index: 1000;
             opacity: 0;
-            transform: translateY(-20px);
             transition: var(--transition);
             pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(6px);
         }
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast svg { flex-shrink: 0; }
+        .toast .t-ok { color: #5eead4; }
+        .toast .t-warn { color: #fbbf24; }
+        .toast .t-err { color: #fda4af; }
 
-        /* 响应式适配 */
-        @media (max-width: 900px) {
-            .main-content {
-                flex-direction: column;
-                gap: 25px;
-            }
-            .container {
-                width: 100%;
-                padding: 25px;
-            }
-            #outputPrompt {
-                min-height: 300px;
-            }
+        /* ==================== 响应式 ==================== */
+        @media (max-width: 960px) {
+            .main-content { flex-direction: column; }
+            .main-card { padding: 22px 16px; }
+            .header { flex-direction: column; text-align: center; }
+            .header-text p { justify-content: center; }
+            .output-window { min-height: 340px; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>AI 提示词生成工具</h1>
-    
-    <div class="main-content">
-        <div class="left-panel">
-            <div class="form-group">
-                <label for="platformSelect">选择目标发布平台</label>
-                <select id="platformSelect">
-                    <option value="公众号">微信公众号（注重深度、共鸣与排版）</option>
-                    <option value="头条号">今日头条（注重资讯密度、冲突与推荐算法）</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="domainSelect">选择创作专业领域</label>
-                <select id="domainSelect">
-                    <option value="汽车">汽车（新车评测/智能出行/行业趋势）</option>
-                    <option value="软件开发">软件开发（技术实战/架构设计/前沿代码）</option>
-                    <option value="科技数码">科技数码</option>
-                    <option value="财经">财经（宏观分析/理财科普/商业底层逻辑）</option>
-                    <option value="健康">健康</option>
-                    <option value="情感">情感</option>
-                    <option value="副业">副业</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="inputContent">核心素材与信息内容</label>
-                <textarea id="inputContent" placeholder="在此处粘贴或输入您的文章核心素材、原始数据、热点事件或主要观点，AI 将基于此自动扩写..."></textarea>
-            </div>
-
-            <div class="btn-group">
-                <button class="btn-generate" onclick="generatePrompt()">
-                    <span>✨ 生成大师级提示词</span>
-                </button>
-                <button class="btn-copy" onclick="copyResult()">
-                    <span>📋 复制完整提示词</span>
-                </button>
-            </div>
+    <div class="header">
+        <div class="logo-tile">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
         </div>
+        <div class="header-text">
+            <h1>AI <span class="hl">提示词生成工具</span></h1>
+            <p>
+                发布平台 × 专业领域 双维定制 · 约束规则随组合动态生成
+                <span class="kbd-hint">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    反 AI 味约束
+                </span>
+            </p>
+        </div>
+    </div>
 
-        <div class="right-panel">
-            <div class="form-group" style="height: 100%;">
-                <label for="outputPrompt">生成的系统级 Prompt</label>
-                <textarea id="outputPrompt" readonly placeholder="精细化配置的提示词将在生成后在此处展示，可直接复制投入到 ChatGPT / Claude / DeepSeek 等大模型中使用..."></textarea>
+    <div class="main-card">
+        <div class="main-content">
+            <div class="left-panel">
+                <!-- 平台选择 -->
+                <div>
+                    <div class="section-label">
+                        <span class="no">1</span> 选择目标发布平台
+                        <span class="tip">决定语气、排版与流量玩法</span>
+                    </div>
+                    <div class="platform-grid" id="platformGrid"></div>
+                </div>
+
+                <!-- 领域选择 -->
+                <div>
+                    <div class="section-label">
+                        <span class="no">2</span> 选择创作专业领域
+                        <span class="tip">注入领域人设与专业约束</span>
+                    </div>
+                    <div class="domain-chips" id="domainChips"></div>
+                </div>
+
+                <!-- 素材输入 -->
+                <div>
+                    <div class="section-label">
+                        <span class="no">3</span> 核心素材与信息内容
+                    </div>
+                    <textarea id="inputContent" placeholder="粘贴或输入文章核心素材、原始数据、热点事件或主要观点，AI 将基于此自动扩写..."></textarea>
+                    <div class="char-count"><span id="charCount">0</span> 字</div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn-generate" onclick="generatePrompt()">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/></svg>
+                        <span>生成大师级提示词</span>
+                    </button>
+                    <button class="btn-copy" onclick="copyResult()">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制完整提示词</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="output-head" style="display:flex;align-items:center;justify-content:space-between;">
+                    <div class="section-label" style="margin-bottom:0;">
+                        <span class="no">4</span> 生成的系统级 Prompt
+                    </div>
+                </div>
+                <div class="output-window">
+                    <div class="ow-titlebar">
+                        <span class="ow-dot r"></span><span class="ow-dot y"></span><span class="ow-dot g"></span>
+                        <span class="ow-title">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            prompt.md
+                        </span>
+                        <span class="ow-meta">
+                            <span class="meta-tag" id="metaPlatform">平台：-</span>
+                            <span class="meta-tag accent" id="metaDomain">领域：-</span>
+                        </span>
+                    </div>
+                    <textarea id="outputPrompt" readonly spellcheck="false" placeholder="精细化配置的提示词将在生成后在此处展示&#10;可直接复制投入 ChatGPT / Claude / DeepSeek / 豆包 等大模型使用..."></textarea>
+                </div>
             </div>
         </div>
     </div>
@@ -285,75 +503,261 @@
 <div id="toast" class="toast"></div>
 
 <script>
-    // 动态生成领域特色词
+    /* ==================== SVG 图标库（Lucide 风格线性图标） ==================== */
+
+    const svg = (paths, size = 18, sw = 2) =>
+        `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+
+    const ICONS = {
+        // 平台
+        wechat: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+        flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+        book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+        // 领域
+        car: '<path d="M5 17H3v-6l2-5h13l2 5v6h-2"/><path d="M7 17h10"/><circle cx="7.5" cy="17.5" r="2"/><circle cx="16.5" cy="17.5" r="2"/>',
+        code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+        phone: '<rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M12 18h.01"/>',
+        chart: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+        pulse: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/><polyline points="3.5 12 8 12 10 8.5 14 15.5 16 12 20.5 12"/>',
+        heart: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>',
+        wallet: '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',
+        briefcase: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
+        network: '<rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/>',
+        // 通用
+        check: '<polyline points="20 6 9 17 4 12"/>',
+        alert: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+        x: '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+    };
+
+    /* ==================== 配置数据 ==================== */
+
+    // 平台配置：差异化的风格约束 + 结构约束 + 字数 + 图标 + 品牌色
+    const PLATFORMS = {
+        "公众号": {
+            icon: "wechat", color: "#07c160",
+            desc: "深度长文 · 排版共鸣 · 在看引导",
+            style: [
+                "**语气风格**：采用「半熟人聊天」的亲切语调，多用「你」「我们」，善用短句和设问，拒绝说教感和官方腔。",
+                "**排版视觉**：段落保持在 2-4 行之间以利于手机屏幕阅读；核心金句单独成行并做【加粗】处理，适当留白。",
+                "**反 AI 味约束（必须严格遵守）**：",
+                "  - 禁用「首先/其次/最后」「综上所述」「值得注意的是」「在这个快速发展的时代」等模板化表述；",
+                "  - 拒绝空洞排比与华丽辞藻堆砌，每个观点必须落到具体场景、具体数字或真实案例上；",
+                "  - 全文不得出现「作为一名AI」等自我指涉表述，要以真人博主的口吻自然表达。"
+            ],
+            structure: [
+                "**爆款标题库**：率先提供 5 个不同维度的标题供我选择（15-25 字，含核心关键词，要求有冲突感、悬念感或强获得感）。",
+                "**痛点引入 (Hook)**：严禁平铺直叙。用近期行业热点事件、或直戳目标用户最头疼的「原生痛点」开篇，150 字内抓住眼球。",
+                "**正文构建**：采用「总-分-总」或「层层递进」逻辑。核心观点开门见山；结合输入素材做案例拆解、数据横向对比，保证论据扎实。",
+                "**结尾机制**：输出一个有共鸣感的「树洞式」结尾，提供 1-2 条落地实操建议，抛出 2 个直击痛点的问题，强力引导读者留言在看。"
+            ],
+            wordCount: "1200-1600 字"
+        },
+        "头条号": {
+            icon: "flame", color: "#ff4d4f",
+            desc: "资讯密度 · 观点犀利 · 算法推荐",
+            style: [
+                "**语气风格**：直奔主题、观点犀利，信息密度高，多用「数据」「事实」和「对比」说话，充满行业洞察力与说服力。",
+                "**排版视觉**：结构层级分明，使用清晰的 H2/H3 小标题；文章中预留 2-3 处写实或信息丰富的【插图位置提示（用括号标出描述）】。",
+                "**反 AI 味约束（必须严格遵守）**：",
+                "  - 禁用「首先/其次/最后」「综上所述」「值得注意的是」「在这个快速发展的时代」等模板化表述；",
+                "  - 每个论断必须配数据、事实或可信信源，禁止「据不完全统计」式模糊引用；",
+                "  - 多用短句和口语化连接，避免长难句堆叠，首屏 200 字内必须给出最抓人的信息点。"
+            ],
+            structure: [
+                "**爆款标题库**：根据头条推荐算法的抓取法则，提供 5 个标题（15-25 字，含冲突感、悬念感或强获得感，禁用标题党欺诈式表述）。",
+                "**痛点引入 (Hook)**：开篇即给冲突或反常识结论，150 字内让读者产生「往下看」的冲动。",
+                "**正文构建**：采用「总-分-总」逻辑。核心观点开门见山；结合输入素材做案例拆解、技术还原或数据横向对比，保证论据扎实。",
+                "**结尾机制**：简明总结核心论点，引发争议或深度思辨，设置明确引导动作：「欢迎点赞、关注并转发，说说你对 XX 的看法？」"
+            ],
+            wordCount: "1200-1800 字"
+        },
+        "小红书": {
+            icon: "book", color: "#ff2442",
+            desc: "真人感笔记 · emoji 排版 · 话题标签",
+            style: [
+                "**语气风格**：真人感、闺蜜感强，第一人称「我」贯穿全文，像和好友分享；适度使用 emoji（每段 1-2 个，不刷屏），网感强但不刻意玩梗。",
+                "**排版视觉**：正文多分段，每段 1-3 行；用「✅ / ❌ / 💡 / 📍」等符号做视觉锚点；关键词用【】或加粗突出；严禁大段密排文字。",
+                "**反 AI 味约束（必须严格遵守）**：",
+                "  - 禁用「首先/其次/最后」「综上所述」「值得注意的是」「希望这篇文章对你有帮助」等模板化表述；",
+                "  - 拒绝完美无瑕的通稿感，保留真实体验细节（翻车经历、踩坑瞬间、真实价格），制造「真的用过/经历过」的信任感；",
+                "  - 不得使用「家人们谁懂啊」等烂大街梗，追求自然口语而非刻意的网络热词堆砌。"
+            ],
+            structure: [
+                "**标题（20 字内）**：提供 5 个标题，必须含 emoji，带数字、悬念或情绪词（如「后悔没早点知道」「亲测有效」），符合小红书信息流点击习惯。",
+                "**开篇 2 行定生死**：首屏前两行必须抛出核心利益点或情绪钩子（信息流折叠只显示前两行）。",
+                "**正文构建**：600-900 字，干货结构化呈现（清单体/步骤体/对比体任选其一），每条信息独立成段，配 emoji 锚点。",
+                "**结尾机制**：以一句真诚的互动提问收尾（如「你们还有什么想看/踩过的坑？评论区聊聊」），并在文末附上 5-8 个 # 话题标签（话题需与领域和内容强相关，含 1 个大流量话题 + 2-3 个垂类精准话题）。"
+            ],
+            wordCount: "600-900 字"
+        }
+    };
+
+    // 领域配置：人设上下文 + 领域专属写作约束 + 图标 + 主题色
+    const DOMAINS = {
+        "汽车": {
+            icon: "car", color: "#f97316",
+            context: "熟悉各大车企最新动态、智能座舱、自动驾驶技术以及车主实际用车痛点。",
+            extra: [
+                "**专业严谨性**：涉及车型、参数、价格时必须准确，禁止编造具体车型的销量数字或配置参数；",
+                "**视角要求**：始终站在「真实车主」的用车视角，而非云评测视角，用实际体验细节（如真实油耗、冬夏续航）建立可信度。"
+            ]
+        },
+        "软件开发": {
+            icon: "code", color: "#6366f1",
+            context: "具备深厚的架构思维，熟悉代码最佳实践，能化繁为简解释复杂的技术概念，注重逻辑与代码严谨性。",
+            extra: [
+                "**专业严谨性**：涉及代码、架构、API 时确保技术准确性，示例代码需可直接运行或贴近真实场景；",
+                "**表达要求**：用「问题→方案→踩坑→收益」的叙事讲技术，拒绝纯文档式罗列，让非资深读者也能跟上。"
+            ]
+        },
+        "科技数码": {
+            icon: "phone", color: "#0ea5e9",
+            context: "对半导体、消费电子、AI 硬件有敏锐洞察，崇尚极客精神，能将硬核技术参数转化为白话解读。",
+            extra: [
+                "**专业严谨性**：涉及芯片制程、性能参数、行业数据时需准确可信，禁止为流量夸大或虚构产品信息；",
+                "**表达要求**：硬核参数必须翻译成「对普通人意味着什么」（如续航多撑几小时、快充省几分钟），拒绝参数复读机式写作。"
+            ]
+        },
+        "财经": {
+            icon: "chart", color: "#10b981",
+            context: "具备严谨的商业洞察力，擅长通过宏观数据剖析底层商业逻辑，注重合规性与理性分析。",
+            extra: [
+                "**合规红线（最高优先级）**：不构成任何投资建议，不预测具体标的涨跌，不承诺收益；涉及行情须提示「市场有风险」；",
+                "**专业严谨性**：数据必须标注来源与时间口径，区分「事实」与「观点」，用通俗类比解释金融概念。"
+            ]
+        },
+        "健康": {
+            icon: "pulse", color: "#14b8a6",
+            context: "遵循科学循证医学原则，科普语言通俗易懂，多用案例消解医学术语的冰冷感，提供切实可行的建议。",
+            extra: [
+                "**安全红线（最高优先级）**：不做诊断、不开处方、不推荐具体药物剂量；所有建议以「就医咨询」为兜底；",
+                "**专业严谨性**：引用研究时说明来源与研究性质（如「某期刊的观察性研究」），区分相关性与因果性，不贩卖健康焦虑。"
+            ]
+        },
+        "情感": {
+            icon: "heart", color: "#ec4899",
+            context: "极具同理心与细腻的心理洞察，擅长抓取亲密关系或社会话题中的情绪共鸣点，提供松弛的情绪价值。",
+            extra: [
+                "**价值导向**：不评判、不站队、不制造性别对立，用「看见情绪」代替「给出判决」；",
+                "**表达要求**：多用第二人称共情式叙述与真实感场景细节，避免空洞鸡汤，建议要落到可执行的小步骤。"
+            ]
+        },
+        "副业": {
+            icon: "wallet", color: "#f59e0b",
+            context: "切合普通人搞钱痛点，聚焦低门槛、可落地的实操步骤，提供认知破局和执行手记，拒绝空洞鸡汤。",
+            extra: [
+                "**合规红线**：不夸大收入、不承诺「月入过万」等结果性收益，收入案例需说明前置条件与时间成本；",
+                "**表达要求**：给出可复制的执行路径（第一步做什么、工具是什么、大概多久见效），诚实呈现门槛与失败率。"
+            ]
+        },
+        "职场": {
+            icon: "briefcase", color: "#8b5cf6",
+            context: "深谙大厂与中小公司的真实生存法则，熟悉求职跳槽、向上管理、跨部门协作、绩效晋升等核心场景，擅长把职场规则拆解成可操作的生存策略，语感犀利但不毒鸡汤。",
+            extra: [
+                "**价值导向**：不贩卖职场焦虑，也不画「努力就能升职」的大饼，诚实呈现职场规则里的灰色地带与个人边界，帮读者「看清牌桌」而非「服从或躺平」的二选一；",
+                "**表达要求**：多用具名或匿名的真实职场案例（裁员、汇报、背锅、晋升答辩等场景）作为分析入口，给出分场景的应对话术或行动清单，让读者可以直接抄作业；",
+                "**专业严谨性**：涉及劳动法、竞业协议、薪资结构等内容时确保表述准确并建议咨询专业人士，禁止编造公司内部数据或具体赔偿标准。"
+            ]
+        },
+        "社会学": {
+            icon: "network", color: "#64748b",
+            context: "受过系统的社会学训练，熟悉韦伯、涂尔干、布尔迪厄、戈夫曼等经典理论传统，也关注内卷、原子化、污名化、性别与阶层等当代议题，擅长用理论之眼重新审视日常生活。",
+            extra: [
+                "**专业严谨性**：使用学术概念（如科层制、自我殖民、凝视、结构性困境）时须给出生活化解释，做到「不掉书袋但专业在线」；",
+                "**视角要求**：把个人困扰放到社会结构层面分析（「个人问题 → 公共议题」的米尔斯式转向），保持中立克制的观察者立场，解释现象而非站队批判；",
+                "**表达要求**：引用研究或调查数据时注明来源，不编造统计数字；用具体的社会观察案例（职场、婚恋、消费、社区）作为分析入口，让读者有「原来如此」的智识愉悦感。"
+            ]
+        }
+    };
+
+    const DEFAULT_PLATFORM = "小红书";
+    const DEFAULT_DOMAIN = "社会学";
+
+    let currentPlatform = DEFAULT_PLATFORM;
+    let currentDomain = DEFAULT_DOMAIN;
+
+    /* ==================== 界面渲染 ==================== */
+
+    function renderPlatforms() {
+        const grid = document.getElementById('platformGrid');
+        grid.innerHTML = '';
+        for (const [name, cfg] of Object.entries(PLATFORMS)) {
+            const card = document.createElement('div');
+            card.className = 'platform-card' + (name === currentPlatform ? ' active' : '');
+            card.style.setProperty('--pc', cfg.color);
+            card.innerHTML = `
+                <div class="p-icon-tile">${svg(ICONS[cfg.icon], 22)}</div>
+                <div class="p-info">
+                    <div class="p-name">${name}</div>
+                    <div class="p-desc">${cfg.desc}</div>
+                </div>
+            `;
+            card.onclick = () => {
+                currentPlatform = name;
+                renderPlatforms();
+            };
+            grid.appendChild(card);
+        }
+    }
+
+    function renderDomains() {
+        const wrap = document.getElementById('domainChips');
+        wrap.innerHTML = '';
+        for (const [name, cfg] of Object.entries(DOMAINS)) {
+            const chip = document.createElement('div');
+            chip.className = 'chip' + (name === currentDomain ? ' active' : '');
+            chip.style.setProperty('--dc', cfg.color);
+            chip.innerHTML = `${svg(ICONS[cfg.icon], 15)}<span>${name}</span>`;
+            chip.onclick = () => {
+                currentDomain = name;
+                renderDomains();
+            };
+            wrap.appendChild(chip);
+        }
+    }
+
+    /* ==================== 提示词生成 ==================== */
+
     function getDomainContext(domain) {
-        const contexts = {
-            "汽车": "熟悉各大车企最新动态、智能座舱、自动驾驶技术以及车主实际用车痛点。",
-            "软件开发": "具备深厚的架构思维，熟悉代码最佳实践，能化繁为简解释复杂的技术概念，注重逻辑与代码严谨性。",
-            "科技数码": "对半导体、消费电子、AI硬件有敏锐洞察，崇尚极客精神，能将硬核技术参数转化为白话解读。",
-            "财经": "具备严谨的商业洞察力，擅长通过宏观数据剖析底层商业逻辑，注重合规性与理性分析。",
-            "健康": "遵循科学循证医学原则，科普语言通俗易懂，多用案例消解医学术语的冰冷感，提供切实可行的建议。",
-            "情感": "极具同理心与细腻的心理洞察，擅长抓取亲密关系或社会话题中的情绪共鸣点，提供松弛的情绪价值。",
-            "副业": "切合普通人搞钱痛点，聚焦低门槛、可落地的实操步骤，提供认知破局和执行手记，拒绝空洞鸡汤。"
-        };
-        return contexts[domain] || "拥有该行业资深的从业经验与深厚的内容沉淀。";
+        return (DOMAINS[domain] || {}).context || "拥有该行业资深的从业经验与深厚的内容沉淀。";
+    }
+
+    function getDomainExtra(domain) {
+        const extra = (DOMAINS[domain] || {}).extra || ["具备该领域资深从业者的专业判断力与事实严谨性。"];
+        return "* **领域专属写作约束**：\n" + extra.map(s => "  - " + s).join("\n");
     }
 
     function generatePrompt() {
-        const platform = document.getElementById('platformSelect').value;
-        const domain = document.getElementById('domainSelect').value;
+        const platform = currentPlatform;
+        const domain = currentDomain;
         const content = document.getElementById('inputContent').value.trim();
-        
+
+        const pCfg = PLATFORMS[platform];
         const contentText = content ? content : "[请在此处直接粘贴您的具体素材、核心观点或大纲，大模型将会基于此进行深度创作]";
         const domainContext = getDomainContext(domain);
 
-        let styleRequirement = "";
-        let structureRequirement = "";
-
-        // 根据平台进行针对性、可执行的 Prompt 微调
-        if (platform === "公众号") {
-            styleRequirement = `* **语气风格**：采用“半熟人聊天”的亲切语调，多用“你”、“我们”，善用短句和设问，适度融入当下网络热梗，拒绝说教感。
-* **排版视觉**：段落保持在 2-4 行之间以利于手机屏幕阅读；核心金句单独成行并做【加粗】处理，适当留白。`;
-            structureRequirement = `* **结尾升华**：输出一个具有共鸣感的“树洞式”结尾。提供 1-2 条落地的实操建议，并抛出 2 个直击痛点的问题，强力引导读者在评论区留言互动。`;
-        } else {
-            styleRequirement = `* **语气风格**：直奔主题、观点犀利，信息密度高，多用“数据”、“事实”和“对比”说话，充满行业洞察力与说服力。
-* **排版视觉**：结构层级分明，使用清晰的 H2/H3 小标题。文章中预留 2-3 处写实或信息丰富的【插图位置提示（用括号标出描述）】。`;
-            structureRequirement = `* **结尾引导**：简明扼要地总结核心论点，引发争议或深度思辨，设置明确的引导动作：“欢迎点赞、关注并转发，说说你对XX的看法？”。`;
-        }
-
-        // 构建符合金字塔原理的标准化大模型 Prompt
         const prompt = `# Role: 资深【${domain}】领域头部博主
 
 ## Profile
-你是一位长期深耕【${domain}】行业的爆款文章操盘手。${domainContext}你非常熟悉【${platform}】的用户画像、阅读习惯以及平台的潜在推荐算法机制。
+你是一位长期深耕【${domain}】行业的爆款内容操盘手。${domainContext}
+你非常熟悉【${platform}】的用户画像、阅读习惯以及平台的流量分发机制。
 
 ## Task
-请基于【输入素材】的内容，为你量身定制撰写一篇高质量的【${platform}】推文。
+请基于【输入素材】的内容，为你量身定制撰写一篇高质量的【${platform}】内容。
 
 ---
 
 ## Constraints (写作约束)
-1. **字数规范**：正文字数严格控制在 1200-1600 字之间，内容逻辑严密，严禁空洞的废话和注水文学。
-2. **风格定位**：
-${styleRequirement}
+1. **字数规范**：正文字数严格控制在 ${pCfg.wordCount}，内容逻辑严密，严禁空洞的废话和注水文学。
+2. **平台风格定位**：
+${pCfg.style.join("\n")}
+3. ${getDomainExtra(domain)}
 
 ---
 
 ## Workflow & Structure (文章结构流程)
 
-1. **爆款标题库 (Headline Matrix)**
-   * 请根据【${platform}】的算法抓取法则和吸睛习惯，率先提供 5 个不同维度的标题供我选择（15-25字，含核心关键词，要求有冲突感、悬念感或强获得感）。
-
-2. **痛点引入 (Hook)**
-   * 严禁平铺直叙。请用近期行业热点事件、或是直戳【${domain}】领域目标用户最头疼的“原生痛点”作为开篇，在 150 字内抓住读者眼球。
-
-3. **正文构建 (Body - 黄金三段论)**
-   * 采用“总-分-总”或“层层递进”的逻辑。
-   * **核心观点**：开门见山抛出论点。
-   * **深度拆解**：结合输入的信息，进行案例拆解、技术还原、或数据横向对比，保证论据扎实。
-
-4. **结尾机制 (Call to Action)**
-${structureRequirement}
+${pCfg.structure.map((s, i) => `${i + 1}. ${s}`).join("\n\n")}
 
 ---
 
@@ -361,38 +765,56 @@ ${structureRequirement}
 ${contentText}
 
 ---
+
 ## Output Limitation
-请直接开始按结构输出，不需要任何多余的寒暄。注意生成的文章不要有引用标签`;
+请直接开始按结构输出，不需要任何多余的寒暄。注意生成的文章不要有引用标签；如果素材中信息不足，宁可基于领域常识做合理演绎，也不要编造具体数据、人名或信源。`;
 
         document.getElementById('outputPrompt').value = prompt;
-        showToast("✨ 提示词生成成功！");
+        document.getElementById('metaPlatform').textContent = '平台：' + platform;
+        document.getElementById('metaDomain').textContent = '领域：' + domain;
+        showToast('ok', "提示词生成成功");
     }
 
     function copyResult() {
         const promptText = document.getElementById('outputPrompt').value;
-        
-        if (!promptText || promptText.startsWith("点击“生成提示词”")) {
-            showToast("⚠️ 请先生成提示词再进行复制！");
+
+        if (!promptText) {
+            showToast('warn', "请先生成提示词再进行复制");
             return;
         }
 
         navigator.clipboard.writeText(promptText).then(() => {
-            showToast("✅ 提示词已成功复制到剪贴板！");
+            showToast('ok', "提示词已成功复制到剪贴板");
         }).catch(err => {
             console.error('复制失败: ', err);
-            showToast("❌ 复制失败，请手动选择复制。");
+            document.getElementById('outputPrompt').select();
+            showToast('err', "复制失败，已全选内容，请手动 Ctrl+C");
         });
     }
 
-    // 自定义轻量提示组件代替系统丑陋的 Alert
-    function showToast(message) {
+    function showToast(type, message) {
         const toast = document.getElementById('toast');
-        toast.innerText = message;
+        const iconMap = {
+            ok: `<span class="t-ok">${svg(ICONS.check, 16, 2.6)}</span>`,
+            warn: `<span class="t-warn">${svg(ICONS.alert, 16)}</span>`,
+            err: `<span class="t-err">${svg(ICONS.x, 16)}</span>`
+        };
+        toast.innerHTML = (iconMap[type] || '') + `<span>${message}</span>`;
         toast.classList.add('show');
-        setTimeout(() => {
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
             toast.classList.remove('show');
         }, 2500);
     }
+
+    // 素材字数统计
+    document.getElementById('inputContent').addEventListener('input', function () {
+        document.getElementById('charCount').textContent = this.value.length;
+    });
+
+    // 初始化渲染
+    renderPlatforms();
+    renderDomains();
 </script>
 
 </body>
